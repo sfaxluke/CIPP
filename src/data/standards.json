@@ -44,6 +44,15 @@
     "impactColour": "info"
   },
   {
+    "name": "standards.EnableCustomerLockbox",
+    "cat": "Global Standards",
+    "helpText": "Enables Customer Lockbox that offers an approval process for Microsoft support to access organization data",
+    "addedComponent": [],
+    "label": "Enable Customer Lockbox",
+    "impact": "Low Impact",
+    "impactColour": "info"
+  },
+  {
     "name": "standards.AnonReportDisable",
     "cat": "Global Standards",
     "helpText": "Shows usernames instead of pseudo anonymised names in reports. This standard is required for reporting to work correctly.",
@@ -55,7 +64,7 @@
   {
     "name": "standards.DisableGuestDirectory",
     "cat": "Global Standards",
-    "helpText": "Disables Guest access to enumerate directory objects. This prevents guest users from see other users or guests in the directory.",
+    "helpText": "Disables Guest access to enumerate directory objects. This prevents guest users from seeing other users or guests in the directory.",
     "addedComponent": [],
     "label": "Restrict guest user access to directory objects",
     "impact": "Low Impact",
@@ -411,6 +420,22 @@
     "impactColour": "info"
   },
   {
+    "name": "standards.EnableMailTips",
+    "cat": "Exchange Standards",
+    "helpText": "Enables all MailTips in Outlook. MailTips are the notifications Outlook and Outlook on the web shows when an email you create, meets some requirements",
+    "addedComponent": [
+      {
+        "type": "number",
+        "name": "standards.EnableMailTips.MailTipsLargeAudienceThreshold",
+        "label": "Number of recipients to trigger the large audience MailTip (Default is 25)",
+        "placeholder": "Enter a profile name"
+      }
+    ],
+    "label": "Enable all MailTips",
+    "impact": "Low Impact",
+    "impactColour": "info"
+  },
+  {
     "name": "standards.DisableViva",
     "cat": "Exchange Standards",
     "helpText": "Disables the daily viva reports for all users.",
@@ -438,19 +463,28 @@
     "impactColour": "info"
   },
   {
+    "name": "standards.EnableMailboxAuditing",
+    "cat": "Exchange Standards",
+    "helpText": "Enables Mailbox auditing for all mailboxes and on tenant level. By default Microsoft does not enable mailbox auditing for Resource Mailboxes, Public Folder Mailboxes and DiscoverySearch Mailboxes. Unified Audit Log needs to be enabled for this standard to function.",
+    "addedComponent": [],
+    "label": "Enable Mailbox auditing",
+    "impact": "Low Impact",
+    "impactColour": "info"
+  },
+  {
     "name": "standards.SendReceiveLimitTenant",
     "cat": "Exchange Standards",
-    "helpText": "Sets the Send and Receive limits for new users. Valid values are 1KB to 150MB. Invalid values will be set to EXO standard of 35MB,36MB",
+    "helpText": "Sets the Send and Receive limits for new users. Valid values are 1MB to 150MB",
     "addedComponent": [
       {
         "type": "number",
         "name": "standards.SendReceiveLimitTenant.SendLimit",
-        "label": "Send limit in MB"
+        "label": "Send limit in MB (Default is 35)"
       },
       {
         "type": "number",
         "name": "standards.SendReceiveLimitTenant.ReceiveLimit",
-        "label": "Receive Limit in MB"
+        "label": "Receive Limit in MB (Default is 36)"
       }
     ],
     "label": "Set send/receive size limits",
@@ -504,6 +538,15 @@
       }
     ],
     "label": "Set Sharing Level for Default calendar",
+    "impact": "Low Impact",
+    "impactColour": "info"
+  },
+  {
+    "name": "standards.DisableExternalCalendarSharing",
+    "cat": "Exchange Standards",
+    "helpText": "Disables the ability for users to share their calendar with external users. Only for the default policy, so exclusions can be made if needed.",
+    "addedComponent": [],
+    "label": "Disable external calendar sharing",
     "impact": "Low Impact",
     "impactColour": "info"
   },
