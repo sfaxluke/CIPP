@@ -3433,7 +3433,7 @@
           "Email-Exchange > Transport"
         ],
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -3443,9 +3443,13 @@
                     "type": "string"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The \"create template based on connector\" row action posts the connector itself. A body without a name is malformed - storing it produces a template that lists with a blank name."
                   }
                 },
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": true,
                 "x-cipp-passthrough": true,
                 "description": "This endpoint forwards the request body onward rather than reading a fixed set of fields. The properties listed here are the ones it is known to read; others may be accepted."
@@ -7061,11 +7065,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": {
-                    "type": "string"
+                  "Name": {
+                    "type": "string",
+                    "description": "The \"create template based on rule\" row action posts the rule itself. A body with neither a PowerShell payload nor a Name is malformed - storing it produces a template that lists with a blank name and deploys as New-TransportRule with no parameters."
                   },
                   "PowerShellCommand": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The \"create template based on rule\" row action posts the rule itself. A body with neither a PowerShell payload nor a Name is malformed - storing it produces a template that lists with a blank name and deploys as New-TransportRule with no parameters."
                   }
                 },
                 "additionalProperties": true,
@@ -37094,6 +37100,7 @@
                         },
                         "status": {
                           "type": "string",
+                          "description": "The status is written at the END of this block, once the action it implies has been carried out. Writing it first meant a failed remediation or delete still left the row marked denied, with nothing on the page to say the action never ran.",
                           "x-cipp-observed-values": [
                             "deniedDelete",
                             "DeniedRemediate"
