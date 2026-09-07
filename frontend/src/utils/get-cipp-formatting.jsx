@@ -255,12 +255,13 @@ export const getCippFormatting = (
     cellName === 'prohibitSendReceiveQuotaInBytes' ||
     cellName === 'storageUsedInBytes' ||
     cellName === 'cleanupReclaimBytes' ||
+    cellName === 'versionEstimateBytes' ||
     cellName === 'ArchiveSize'
   ) {
     //convert bytes to GB
     const bytes = data
     if (bytes === null || bytes === undefined) {
-      if (cellName === 'cleanupReclaimBytes') {
+      if (cellName === 'cleanupReclaimBytes' || cellName === 'versionEstimateBytes') {
         return isText ? '—' : formatCellText('—', isText)
       }
       return isText ? (
@@ -269,7 +270,10 @@ export const getCippFormatting = (
         <Chip variant="outlined" label="No data" size="small" color="info" />
       )
     }
-    if (cellName === 'cleanupReclaimBytes' && Number(bytes) === 0) {
+    if (
+      (cellName === 'cleanupReclaimBytes' || cellName === 'versionEstimateBytes') &&
+      Number(bytes) === 0
+    ) {
       return isText ? '—' : formatCellText('—', isText)
     }
     const gb = bytes / 1024 / 1024 / 1024

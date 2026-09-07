@@ -26,6 +26,9 @@ import {
   SvgIcon,
   Tab,
   Tabs,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import { Grid } from '@mui/system'
@@ -295,6 +298,7 @@ const Page = () => {
   const newSyncRunRef = useRef(false)
   const newCleanupRunRef = useRef(false)
   const [inventoryTab, setInventoryTab] = useState(0)
+  const [topSitesMetric, setTopSitesMetric] = useState('percent')
 
   const waiting = !!currentTenant && currentTenant !== 'AllTenants'
   const spQueryKey = `ListSites-SharePointSiteUsage-${currentTenant}-true`
@@ -378,6 +382,18 @@ const Page = () => {
   const inactive = useMemo(() => inactiveRows(spRows), [spRows])
   const byTemplate = useMemo(() => templateBreakdown(spRows), [spRows])
   const topSites = useMemo(() => topSitesByGb(spRows), [spRows])
+  const canShowTopSitesPercent = Number.isFinite(tenantUsedGb) && tenantUsedGb > 0
+  const effectiveTopSitesMetric =
+    topSitesMetric === 'percent' && !canShowTopSitesPercent ? 'gb' : topSitesMetric
+  const topSitesChartSeries = useMemo(() => {
+    if (effectiveTopSitesMetric === 'percent') {
+      return topSites.map((item) => {
+        const pct = Number(item.percentOfTenant)
+        return Number.isFinite(pct) ? pct : 0
+      })
+    }
+    return topSites.map((item) => Number(item.storageUsedInGigabytes) || 0)
+  }, [topSites, effectiveTopSitesMetric])
   const fileArchiveBytes = useMemo(() => sumArchiveBytes(spRows), [spRows])
   const sitesWithFileArchive = useMemo(
     () => spRows.filter((row) => Number(row.archivedFileDiskUsedBytes) > 0).length,
@@ -683,23 +699,23 @@ const Page = () => {
               <Grid size={{ md: 12, xs: 12 }}>
                 <Stack
                   direction="row"
-                  alignItems="center"
+                  alignItems="flex-start"
                   justifyContent="space-between"
-                  sx={{ mb: 1 }}
                   useFlexGap
                   flexWrap="wrap"
                   spacing={1}
+                  sx={{ mb: 1 }}
                 >
-                  <Stack spacing={0.25}>
+                  <Stack spacing={0.25} sx={{ flex: '1 1 280px', minWidth: 0 }}>
                     <Typography variant="h5">Storage Report</Typography>
                     <Typography variant="body2" color="text.secondary">
                       Tenant health for SharePoint, Teams-connected sites, and OneDrive — where
                       capacity is used. Teams storage is SharePoint capacity on group/channel sites,
-                      not a separate pool. File-level M365 Archive usage (per-site archived files) is
-                      included after Sync data when SharePoint admin access is available.
+                      not a separate pool. File-level M365 Archive usage is included after usage
+                      sync when SharePoint admin access is available.
                     </Typography>
                   </Stack>
-                  <Stack direction="row" spacing={1} alignItems="center">
+                  <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
                     <CippQueryRefreshButton
                       queryKeys={[...refreshKeys, ...cleanupRefreshKeys]}
                       isFetching={isFetching || cleanupScan.isFetching}
@@ -707,39 +723,60 @@ const Page = () => {
                     <CippMultiQueueTracker
                       queueIds={syncQueueIds}
                       relatedQueryKeys={refreshKeys}
-                      label="Storage sync"
+                      label="Usage sync"
                     />
+                    <Tooltip title="Refresh SharePoint site usage and OneDrive sizes for charts, tables, and near-quota / inactive views.">
+                      <span>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            newSyncRunRef.current = true
+                            syncDialog.handleOpen()
+                          }}
+                          startIcon={
+                            <SvgIcon fontSize="small">
+                              <CloudArrowDownIcon />
+                            </SvgIcon>
+                          }
+                        >
+                          Sync usage
+                        </Button>
+                      </span>
+                    </Tooltip>
                     <CippMultiQueueTracker
                       queueIds={cleanupQueueIds}
                       relatedQueryKeys={cleanupRefreshKeys}
                       label="Cleanup scan"
                     />
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => {
-                        newSyncRunRef.current = true
-                        syncDialog.handleOpen()
-                      }}
-                      startIcon={
-                        <SvgIcon fontSize="small">
-                          <CloudArrowDownIcon />
-                        </SvgIcon>
-                      }
-                    >
-                      Sync data
-                    </Button>
+                    <Tooltip title="Queue library version estimates and recycle totals for reclaim columns. Does not refresh usage sizes.">
+                      <span>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={spRows.length === 0}
+                          onClick={() => {
+                            setInventoryTab(0)
+                            newCleanupRunRef.current = true
+                            cleanupScanDialog.handleOpen()
+                          }}
+                          startIcon={<CleaningServices fontSize="small" />}
+                        >
+                          {hasScanned ? 'Rescan cleanup' : 'Scan cleanup'}
+                        </Button>
+                      </span>
+                    </Tooltip>
                   </Stack>
                 </Stack>
                 {needsSync && (
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    No cached usage data found yet (or a workload is empty). Click Sync data to
+                    No cached usage data found yet (or a workload is empty). Use Sync usage to
                     refresh SharePoint site usage from SharePoint admin and OneDrive usage reports.
                   </Alert>
                 )}
                 {needsCleanupScan && (
                   <Alert severity="info" sx={{ mb: 1 }}>
-                    No cleanup scan cached for this tenant yet. Click Scan cleanup to queue library
+                    No cleanup scan cached for this tenant yet. Use Scan cleanup to queue library
                     version estimates and recycle totals; reclaim columns appear when the queue
                     finishes.
                   </Alert>
@@ -898,8 +935,32 @@ const Page = () => {
                   isFetching={isFetching}
                   chartType="bar"
                   labels={topSites.map((item) => item.displayName || item.webUrl || 'Site')}
-                  chartSeries={topSites.map((item) => Number(item.storageUsedInGigabytes) || 0)}
-                  totalLabel="GB"
+                  chartSeries={topSitesChartSeries}
+                  totalLabel={effectiveTopSitesMetric === 'percent' ? '% of tenant' : 'GB'}
+                  headerAction={
+                    <ToggleButtonGroup
+                      size="small"
+                      exclusive
+                      value={effectiveTopSitesMetric}
+                      onChange={(_e, next) => {
+                        if (!next) return
+                        if (next === 'percent' && !canShowTopSitesPercent) return
+                        setTopSitesMetric(next)
+                      }}
+                      aria-label="Largest sites metric"
+                    >
+                      <ToggleButton value="gb" aria-label="Show gigabytes">
+                        GB
+                      </ToggleButton>
+                      <ToggleButton
+                        value="percent"
+                        aria-label="Show percent of tenant storage"
+                        disabled={!canShowTopSitesPercent}
+                      >
+                        %
+                      </ToggleButton>
+                    </ToggleButtonGroup>
+                  }
                 />
               </Grid>
 
@@ -924,27 +985,8 @@ const Page = () => {
                     refreshFunction={spUsage}
                     actions={siteActions}
                     filters={siteFilters}
-                    defaultSorting={
-                      hasScanned
-                        ? [{ id: 'cleanupReclaimBytes', desc: true }]
-                        : [{ id: 'storageUsedInGigabytes', desc: true }]
-                    }
+                    defaultSorting={[{ id: 'storageUsedInGigabytes', desc: true }]}
                     onChange={(rows) => setSelectedSites(rows || [])}
-                    cardButton={
-                      <Button
-                        size="small"
-                        variant="contained"
-                        disabled={spRows.length === 0}
-                        onClick={() => {
-                          setInventoryTab(0)
-                          newCleanupRunRef.current = true
-                          cleanupScanDialog.handleOpen()
-                        }}
-                        startIcon={<CleaningServices fontSize="small" />}
-                      >
-                        {hasScanned ? 'Rescan cleanup' : 'Scan cleanup'}
-                      </Button>
-                    }
                     simpleColumns={[
                       'libraries',
                       'displayName',
@@ -995,13 +1037,13 @@ const Page = () => {
 
               <CippApiDialog
                 createDialog={syncDialog}
-                title="Sync storage usage data"
+                title="Sync usage data"
                 api={{
                   type: 'GET',
                   url: '/api/ExecCIPPDBCache',
                   data: { Name: 'Name' },
                   confirmText:
-                    'Queue a refresh of SharePoint site usage from SharePoint admin (including file-level archive metrics) and OneDrive usage for this tenant? Progress shows next to Sync; tables refresh when queues finish.',
+                    'Queue a refresh of SharePoint site usage (including file-level archive metrics) and OneDrive usage for this tenant? This updates charts and tables. Progress shows next to Sync usage.',
                   relatedQueryKeys: refreshKeys,
                   onSuccess: (result) => {
                     const queueId = result?.Metadata?.QueueId
@@ -1027,7 +1069,7 @@ const Page = () => {
                   url: '/api/ExecCIPPDBCache',
                   data: { Name: 'Name' },
                   confirmText:
-                    'Queue a cleanup scan for this tenant? CIPP collects library version estimates and recycle-bin totals for every SharePoint site (hold-only for this report). Progress shows next to Cleanup scan; reclaim columns refresh when the queue finishes.',
+                    'Queue a cleanup scan for this tenant? This collects library version estimates and recycle-bin totals for reclaim columns only — it does not refresh usage sizes. Progress shows next to Scan cleanup.',
                   relatedQueryKeys: cleanupRefreshKeys,
                   onSuccess: (result) => {
                     const queueId = result?.Metadata?.QueueId

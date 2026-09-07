@@ -272,7 +272,7 @@ export const CippStorageCleanupDrawer = ({
                   startIcon={<CleaningServices />}
                   onClick={versionDialog.handleOpen}
                 >
-                  Start version cleanup
+                  Configure version cleanup…
                 </Button>
               ) : null}
               {jobStatusApi.data?.Results || jobStatusApi.data ? (
@@ -338,10 +338,15 @@ export const CippStorageCleanupDrawer = ({
 
       <CippApiDialog
         createDialog={versionDialog}
-        title="Start Version Cleanup"
+        title="Configure Version Cleanup"
         relatedQueryKeys={[`CleanupLibs-${tenantFilter}-${siteUrl}`]}
         allowResubmit
-        defaultvalues={{ BatchDeleteMode: '2' }}
+        defaultvalues={{
+          BatchDeleteMode: '2',
+          DeleteOlderThanDays: 90,
+          MajorVersionLimit: 50,
+          MajorWithMinorVersionsLimit: 0,
+        }}
         api={{
           type: 'POST',
           url: '/api/ExecSPOVersionCleanup',
@@ -368,7 +373,13 @@ export const CippStorageCleanupDrawer = ({
         }}
         row={activeSite ?? {}}
       >
-        {({ formHook }) => <CippSharePointVersionCleanupFields formHook={formHook} />}
+        {({ formHook }) => (
+          <CippSharePointVersionCleanupFields
+            formHook={formHook}
+            tenantFilter={tenantFilter}
+            siteUrl={siteUrl}
+          />
+        )}
       </CippApiDialog>
 
       <CippApiDialog

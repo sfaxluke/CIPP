@@ -108,7 +108,7 @@ export const CippTranslations = {
   'info.logoUrl': 'Logo',
   'commitmentTerm.renewalConfiguration.renewalDate': 'Renewal Date',
   storageUsedInBytes: 'Storage Used',
-  versionEstimateBytes: 'Versions (est.)',
+  versionEstimateBytes: 'Version size (est.)',
   cleanupReclaimBytes: 'Reclaim (est.)',
   cleanupSignals: 'Cleanup',
   cleanupOpportunity: 'Cleanup opportunity',

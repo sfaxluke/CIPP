@@ -17,6 +17,7 @@ import { CippSiteRecycleBinDialog } from '../../../components/CippComponents/Cip
 import { CippLibraryPermissionsDialog } from '../../../components/CippComponents/CippLibraryPermissionsDialog'
 import { CippCheckUserAccessDialog } from '../../../components/CippComponents/CippCheckUserAccessDialog'
 import { CippSharePointQuotaCard } from '../../../components/CippCards/CippSharePointQuotaCard'
+import { CippSharePointVersionCleanupFields } from '../../../components/CippComponents/CippSharePointVersionCleanupFields'
 import {
   CippAnonymizedReportAlert,
   isReportAnonymized,
@@ -591,7 +592,7 @@ const Page = () => {
       multiPost: false,
     },
     {
-      label: 'Start Version Cleanup Job',
+      label: 'Configure Version Cleanup…',
       type: 'POST',
       icon: <CippIcons.CleaningServices />,
       url: '/api/ExecSPOVersionCleanup',
@@ -601,64 +602,21 @@ const Page = () => {
       confirmText:
         'Start a file version cleanup job for [displayName]. This will trim old file versions based on the selected mode.',
       condition: () => canWriteSite,
-      children: ({ formHook }) => (
-        <>
-          <CippFormComponent
-            type="radio"
-            name="BatchDeleteMode"
-            label="Cleanup Mode"
-            formControl={formHook}
-            options={[
-              { label: 'Sync Policy — apply site version policy to existing versions', value: '2' },
-              {
-                label: 'Delete Older Than Days — remove versions older than a set number of days',
-                value: '0',
-              },
-              { label: 'Count Limits — keep a maximum number of major versions', value: '1' },
-            ]}
+      children: ({ formHook, row }) => {
+        const single = Array.isArray(row) ? (row.length === 1 ? row[0] : null) : row
+        return (
+          <CippSharePointVersionCleanupFields
+            formHook={formHook}
+            tenantFilter={single?.Tenant ?? tenantFilter}
+            siteUrl={single?.webUrl}
           />
-          <CippFormCondition
-            field="BatchDeleteMode"
-            compareType="is"
-            compareValue="0"
-            formControl={formHook}
-          >
-            <CippFormComponent
-              type="number"
-              name="DeleteOlderThanDays"
-              label="Delete Versions Older Than (days)"
-              formControl={formHook}
-              validators={{
-                required: 'Please enter the number of days',
-                min: { value: 30, message: 'SharePoint requires at least 30 days' },
-              }}
-            />
-          </CippFormCondition>
-          <CippFormCondition
-            field="BatchDeleteMode"
-            compareType="is"
-            compareValue="1"
-            formControl={formHook}
-          >
-            <CippFormComponent
-              type="number"
-              name="MajorVersionLimit"
-              label="Maximum Major Versions to Keep"
-              formControl={formHook}
-              validators={{ required: 'Please enter the version limit' }}
-            />
-            <CippFormComponent
-              type="number"
-              name="MajorWithMinorVersionsLimit"
-              label="Major Versions That Keep Their Minor Versions"
-              formControl={formHook}
-              validators={{ required: 'Please enter the major-with-minor version limit' }}
-            />
-          </CippFormCondition>
-        </>
-      ),
+        )
+      },
       defaultvalues: {
         BatchDeleteMode: '2',
+        DeleteOlderThanDays: 90,
+        MajorVersionLimit: 50,
+        MajorWithMinorVersionsLimit: 0,
       },
       customDataformatter: (row, action, formData) => {
         const formatRow = (singleRow) => ({
