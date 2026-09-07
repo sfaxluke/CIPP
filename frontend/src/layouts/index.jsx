@@ -21,6 +21,7 @@ import { SubscriptionEndedDialog } from '../components/CippComponents/Subscripti
 import { FailedPaymentDialog } from '../components/CippComponents/FailedPaymentDialog'
 import { CippMaintenanceBanner } from '../components/CippComponents/CippMaintenanceBanner'
 import { CippImpersonationBanner } from '../components/CippComponents/CippImpersonationBanner'
+import { matchPattern } from '../utils/permission-rules'
 
 import {
   CHROME_TOP_OFFSET,
@@ -163,14 +164,10 @@ export const Layout = (props) => {
                     return true
                   }
 
-                  // Pattern matching - check if required permission contains wildcards
+                  // Pattern matching - matchPattern escapes every regex metacharacter and
+                  // treats * as the only wildcard, mirroring PowerShell -like on the backend.
                   if (requiredPerm.includes('*')) {
-                    // Convert wildcard pattern to regex
-                    const regexPattern = requiredPerm
-                      .replace(/\./g, '\\.') // Escape dots
-                      .replace(/\*/g, '.*') // Convert * to .*
-                    const regex = new RegExp(`^${regexPattern}$`)
-                    return regex.test(userPerm)
+                    return matchPattern(requiredPerm, userPerm)
                   }
 
                   return false

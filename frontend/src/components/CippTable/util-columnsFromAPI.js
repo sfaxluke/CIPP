@@ -187,6 +187,9 @@ const getAtPath = (obj, path) => {
 // O(n * keys) traversal on large datasets.
 const MAX_MERGE_SAMPLE = 50
 
+// Keys that would reach Object.prototype when written through `base[key] = ...`.
+const UNSAFE_MERGE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 const mergeKeys = (dataArray) => {
   const sample =
     dataArray.length > MAX_MERGE_SAMPLE ? dataArray.slice(0, MAX_MERGE_SAMPLE) : dataArray
@@ -197,6 +200,8 @@ const mergeKeys = (dataArray) => {
         return base
       }
       Object.keys(obj).forEach((key) => {
+        // API rows are untrusted input; never let a key walk up the prototype chain.
+        if (UNSAFE_MERGE_KEYS.has(key)) return
         if (
           typeof obj[key] === 'object' &&
           obj[key] !== null &&

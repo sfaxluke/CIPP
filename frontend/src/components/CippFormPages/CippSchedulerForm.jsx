@@ -372,7 +372,9 @@ const CippSchedulerForm = (props) => {
 
       // Early return if task is not found
       if (!task) {
-        console.warn(`Task with RowKey ${taskId || router.query.id} not found`)
+        // The id comes from the URL; strip line breaks so it cannot forge extra log lines.
+        const requestedId = String(taskId || router.query.id).replace(/[\r\n]/g, '')
+        console.warn(`Task with RowKey ${requestedId} not found`)
         return
       }
 

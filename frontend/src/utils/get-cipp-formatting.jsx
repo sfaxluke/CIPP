@@ -7,6 +7,20 @@ import { formatCellText } from '../components/CippTable/CippCellText'
 import { CippCopyToClipBoard } from '../components/CippComponents/CippCopyToClipboard'
 import { getCippLicenseTranslation } from './get-cipp-license-translation'
 import CippDataTableButton from '../components/CippTable/CippDataTableButton'
+
+/**
+ * True only for a string that parses as an absolute http(s) URL. Used before any value
+ * from tenant data is handed to an active attribute (href, img src).
+ */
+export const isHttpUrl = (value) => {
+  if (typeof value !== 'string') return false
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
 import { LinearProgressWithLabel } from '../components/linearProgressWithLabel'
 import { CippLocationDialog } from '../components/CippComponents/CippLocationDialog'
 import { isoDuration, en } from '@musement/iso-duration'
@@ -290,13 +304,12 @@ export const getCippFormatting = (
   }
 
   if (cellName === 'info.logoUrl') {
-    return isText ? (
-      data
-    ) : data ? (
-      <img src={data} alt="logo" style={{ width: '16px', height: '16px' }} />
-    ) : (
-      ''
-    )
+    if (isText) return data
+    if (!data) return ''
+    // Only render an <img> for an http(s) URL; anything else (javascript:, data:, garbage)
+    // falls back to plain text so tenant-supplied data can never become an active source.
+    if (!isHttpUrl(data)) return formatCellText(data, isText)
+    return <img src={data} alt="logo" style={{ width: '16px', height: '16px' }} />
   }
 
   // Audit-log coverage timestamps: render as an ABSOLUTE date in the browser's local timezone
@@ -1443,14 +1456,7 @@ export const getCippFormatting = (
   //parse and would otherwise render as a link relative to the CIPP instance, so
   //those are shown as plain text with only the copy button.
   if (typeof data === 'string' && data.toLowerCase().startsWith('http')) {
-    let isValidUrl = false
-    try {
-      const parsedUrl = new URL(data)
-      isValidUrl =
-        parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
-    } catch {
-      isValidUrl = false
-    }
+    const isValidUrl = isHttpUrl(data)
     if (isText) {
       return data
     }

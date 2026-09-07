@@ -586,19 +586,26 @@ export const CIPPTableToptoolbar = React.memo(
       );
     }
 
+    // Show one column by name. The name comes from preset data, so it is added through
+    // Object.fromEntries (which defines the property directly) rather than a computed key
+    // in a spread literal, keeping a value such as '__proto__' away from the prototype chain.
+    const showColumn = (name) => {
+      const key = String(name).trim()
+      if (!usedColumns.includes(key)) return false
+      setColumnVisibility((prev) => Object.fromEntries([...Object.entries(prev), [key, true]]))
+      return true
+    }
+
     // Shared function for setting nested column visibility
     const setNestedVisibility = (col) => {
       if (typeof col === 'object' && col !== null) {
         Object.keys(col).forEach((key) => {
-          if (usedColumns.includes(key.trim())) {
-            setColumnVisibility((prev) => ({ ...prev, [key.trim()]: true }))
+          if (showColumn(key)) {
             setNestedVisibility(col[key])
           }
         })
       } else {
-        if (usedColumns.includes(col.trim())) {
-          setColumnVisibility((prev) => ({ ...prev, [col.trim()]: true }))
-        }
+        showColumn(col)
       }
     }
 

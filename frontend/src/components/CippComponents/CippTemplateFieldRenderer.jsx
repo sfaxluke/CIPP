@@ -5,6 +5,7 @@ import CippFormComponent from "./CippFormComponent";
 import { getCippTranslation } from "../../utils/get-cipp-translation";
 import { useIntuneDefinitions } from "../../hooks/use-intune-collection";
 import { collectSettingDefinitionIds } from "../../utils/intune-setting-definition-ids";
+import { matchPattern } from "../../utils/permission-rules";
 
 // One shared reference for the nothing-to-resolve case, so the hook below is not handed a fresh
 // array on every render.
@@ -225,10 +226,8 @@ const CippTemplateFieldRenderer = ({
   const isFieldBlacklisted = (fieldName) => {
     return blacklistedFields.some((pattern) => {
       if (pattern.includes("*")) {
-        // Convert wildcard pattern to regex
-        const regexPattern = pattern.replace(/\*/g, ".*").replace(/\./g, "\\.");
-        const regex = new RegExp(`^${regexPattern}$`, "i");
-        return regex.test(fieldName);
+        // matchPattern escapes every regex metacharacter and treats * as the only wildcard
+        return matchPattern(pattern, fieldName);
       }
       return pattern === fieldName;
     });

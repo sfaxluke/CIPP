@@ -1,5 +1,6 @@
 import Button from '@mui/material/Button'
 import { usePermissions } from '../hooks/use-permissions.js'
+import { matchPattern } from './permission-rules'
 /**
  * Permission Helper Utilities
  *
@@ -33,14 +34,10 @@ export const hasPermission = (userPermissions, requiredPermissions) => {
         return true
       }
 
-      // Pattern matching - check if required permission contains wildcards
+      // Pattern matching - matchPattern escapes every regex metacharacter and treats
+      // * as the only wildcard, mirroring PowerShell -like on the backend.
       if (requiredPerm.includes('*')) {
-        // Convert wildcard pattern to regex
-        const regexPattern = requiredPerm
-          .replace(/\./g, '\\.') // Escape dots
-          .replace(/\*/g, '.*') // Convert * to .*
-        const regex = new RegExp(`^${regexPattern}$`)
-        return regex.test(userPerm)
+        return matchPattern(requiredPerm, userPerm)
       }
 
       return false

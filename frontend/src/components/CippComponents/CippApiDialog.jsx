@@ -315,11 +315,17 @@ export const CippApiDialog = (props) => {
       !linkOpenedRef.current
     ) {
       linkOpenedRef.current = true
-      const linkWithData = api.link.replace(
-        /\[([^\]]+)\]/g,
-        (_, key) => getRawNestedValue(row, key) || `[${key}]`
-      )
-      if (linkWithData.startsWith('/') && !api?.external) {
+      const isInternalLink = api.link.startsWith('/') && !api?.external
+      const linkWithData = api.link.replace(/\[([^\]]+)\]/g, (_, key) => {
+        const value = getRawNestedValue(row, key)
+        if (value === undefined || value === null || value === '') return `[${key}]`
+        // Internal routes only ever substitute ids and query values, so encode them: the row
+        // is tenant data and must not be able to inject path segments or a second origin.
+        // External links may substitute a whole URL (e.g. [webUrl]) and are left as-is.
+        return isInternalLink ? encodeURIComponent(String(value)) : value
+      })
+      // A protocol-relative result (//evil.example) would leave the app; keep it in-app only.
+      if (isInternalLink && !linkWithData.startsWith('//')) {
         router.push(linkWithData, undefined, { shallow: true })
       } else {
         window.open(linkWithData, api.target || '_blank')

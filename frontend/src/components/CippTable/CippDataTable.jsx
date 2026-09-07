@@ -685,19 +685,24 @@ export const CippDataTable = (props) => {
     parentRow,
   } = props
 
-  // Create a map of column IDs to their filterType for quick lookup
+  // Create a map of column IDs to their filterType for quick lookup.
+  // Built via Map.set + Object.fromEntries rather than `acc[v.id] = ...`: the column id is
+  // a computed key from preset data, and a bracket assignment would route a value such as
+  // '__proto__' through Object.prototype's setter. Map keys never touch the prototype chain.
   const filterTypeMap = useMemo(() => {
     if (!filters || !Array.isArray(filters)) return {}
-    return filters.reduce((acc, filter) => {
-      if (filter.value && Array.isArray(filter.value)) {
-        filter.value.forEach((v) => {
-          if (v.id && filter.filterType) {
-            acc[v.id] = filter.filterType
-          }
-        })
-      }
-      return acc
-    }, {})
+    return Object.fromEntries(
+      filters.reduce((acc, filter) => {
+        if (filter.value && Array.isArray(filter.value)) {
+          filter.value.forEach((v) => {
+            if (v.id && filter.filterType) {
+              acc.set(v.id, filter.filterType)
+            }
+          })
+        }
+        return acc
+      }, new Map())
+    )
   }, [filters])
 
   // Track if initial filters have been applied

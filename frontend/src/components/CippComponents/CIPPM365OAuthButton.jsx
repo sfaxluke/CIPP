@@ -311,12 +311,11 @@ export const CIPPM365OAuthButton = ({
           tenantId = idTokenPayload.tid
         }
 
-        if (username && username.includes('@') && username.includes('.onmicrosoft.com')) {
-          onmicrosoftDomain = username.split('@')[1]
-        } else if (idTokenPayload.iss) {
-          const issuerMatch = idTokenPayload.iss.match(/https:\/\/sts\.windows\.net\/([^/]+)\//)
-          if (issuerMatch && issuerMatch[1]) {
-          }
+        // Only accept the domain part when it actually ends in .onmicrosoft.com; a plain
+        // substring check would also match user@evil.onmicrosoft.com.example.
+        const domainPart = username && username.includes('@') ? username.split('@')[1] : ''
+        if (domainPart && domainPart.toLowerCase().endsWith('.onmicrosoft.com')) {
+          onmicrosoftDomain = domainPart
         }
         setIsServiceAccount(checkIsServiceAccount(username))
       } catch (error) {}
