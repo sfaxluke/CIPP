@@ -62,20 +62,25 @@ function Get-CIPPGroupsReport {
         foreach ($Item in $Page.Items) {
             try {
                 $Group = $Item.Data | ConvertFrom-Json -Depth 10 -ErrorAction Stop
+                # Collect every note property once, then attach in a single Add-Member call.
+                $NewProps = [ordered]@{}
                 if ($Group.members -and -not $Group.membersCsv) {
-                    $Group | Add-Member -NotePropertyName 'membersCsv' -NotePropertyValue ($Group.members.userPrincipalName -join ',') -Force
+                    $NewProps['membersCsv'] = $Group.members.userPrincipalName -join ','
                 }
                 if ($Group.owners -and -not $Group.ownersCsv) {
-                    $Group | Add-Member -NotePropertyName 'ownersCsv' -NotePropertyValue ($Group.owners.userPrincipalName -join ',') -Force
+                    $NewProps['ownersCsv'] = $Group.owners.userPrincipalName -join ','
                 }
                 if ($null -eq $Group.hasOwner) {
-                    $Group | Add-Member -NotePropertyName 'hasOwner' -NotePropertyValue (-not [string]::IsNullOrEmpty($Group.ownersCsv)) -Force
+                    # Use the freshly computed ownersCsv if we just built one, else the stored value.
+                    $OwnersCsv = if ($NewProps.Contains('ownersCsv')) { $NewProps['ownersCsv'] } else { $Group.ownersCsv }
+                    $NewProps['hasOwner'] = -not [string]::IsNullOrEmpty($OwnersCsv)
                 }
                 # Per-item timestamp: a page may span tenants.
-                $Group | Add-Member -NotePropertyName 'CacheTimestamp' -NotePropertyValue $Item.Timestamp -Force
+                $NewProps['CacheTimestamp'] = $Item.Timestamp
                 if ($TenantFilter -eq 'AllTenants') {
-                    $Group | Add-Member -NotePropertyName 'Tenant' -NotePropertyValue $Item.PartitionKey -Force
+                    $NewProps['Tenant'] = $Item.PartitionKey
                 }
+                $Group | Add-Member -NotePropertyMembers $NewProps -Force
                 $Results.Add($Group)
             } catch {
                 Write-LogMessage -API 'GroupsReport' -tenant $Item.PartitionKey -message "Failed to parse group item: $($_.Exception.Message)" -sev Warning
@@ -119,14 +124,19 @@ function Get-CIPPGroupsReport {
     foreach ($Item in $Items) {
         try {
             $Group = $Item.Data | ConvertFrom-Json -Depth 10 -ErrorAction Stop
+            # Collect every note property once, then attach in a single Add-Member call.
+            $NewProps = [ordered]@{}
             if ($Group.members -and -not $Group.membersCsv) {
-                $Group | Add-Member -NotePropertyName 'membersCsv' -NotePropertyValue ($Group.members.userPrincipalName -join ',') -Force
+                $NewProps['membersCsv'] = $Group.members.userPrincipalName -join ','
             }
             if ($Group.owners -and -not $Group.ownersCsv) {
-                $Group | Add-Member -NotePropertyName 'ownersCsv' -NotePropertyValue ($Group.owners.userPrincipalName -join ',') -Force
+                $NewProps['ownersCsv'] = $Group.owners.userPrincipalName -join ','
             }
-            $Group | Add-Member -NotePropertyName 'hasOwner' -NotePropertyValue (-not [string]::IsNullOrEmpty($Group.ownersCsv)) -Force
-            $Group | Add-Member -NotePropertyName 'CacheTimestamp' -NotePropertyValue $CacheTimestamp -Force
+            # Use the freshly computed ownersCsv if we just built one, else the stored value.
+            $OwnersCsv = if ($NewProps.Contains('ownersCsv')) { $NewProps['ownersCsv'] } else { $Group.ownersCsv }
+            $NewProps['hasOwner'] = -not [string]::IsNullOrEmpty($OwnersCsv)
+            $NewProps['CacheTimestamp'] = $CacheTimestamp
+            $Group | Add-Member -NotePropertyMembers $NewProps -Force
             $Results.Add($Group)
         } catch {
             Write-LogMessage -API 'GroupsReport' -tenant $TenantFilter -message "Failed to parse group item: $($_.Exception.Message)" -sev Warning
