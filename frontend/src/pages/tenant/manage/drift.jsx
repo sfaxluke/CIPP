@@ -1,21 +1,6 @@
 import { Layout as DashboardLayout } from '../../../layouts/index'
+import { CippIcons } from '../../../utils/icon-registry'
 import { useRouter } from 'next/router'
-import {
-  Check,
-  Warning,
-  ExpandMore,
-  CheckCircle,
-  Block,
-  CheckBox,
-  Cancel,
-  Policy,
-  Error,
-  Info,
-  FactCheck,
-  Search,
-  Edit,
-  CompareArrows,
-} from '@mui/icons-material'
 import {
   Box,
   Stack,
@@ -41,7 +26,7 @@ import { CippApiDialog } from '../../../components/CippComponents/CippApiDialog'
 import { useDialog } from '../../../hooks/use-dialog'
 import tabOptions from './tabOptions.json'
 import { getStandards } from '../../../utils/standards-data'
-import { createDriftManagementActions } from './driftManagementActions'
+import { createDriftManagementActions } from '../../../components/CippComponents/CippDriftManagementActions'
 import { ExecutiveReportButton } from '../../../components/ExecutiveReportButton'
 import { CippAutoComplete } from '../../../components/CippComponents/CippAutocomplete'
 import CippFormComponent from '../../../components/CippComponents/CippFormComponent'
@@ -342,24 +327,24 @@ const ManageDriftPage = () => {
   const getDeviationIcon = (state) => {
     switch (state?.toLowerCase()) {
       case 'current':
-        return <Warning color="warning" />
+        return <CippIcons.Warning color="warning" />
       case 'denied':
-        return <Error color="error" />
+        return <CippIcons.Error color="error" />
       case 'denieddelete':
       case 'denied - delete':
-        return <Block color="error" />
+        return <CippIcons.Block color="error" />
       case 'deniedremediate':
       case 'denied - remediate':
-        return <Cancel color="error" />
+        return <CippIcons.Cancel color="error" />
       case 'accepted':
-        return <CheckCircle color="success" />
+        return <CippIcons.CheckCircle color="success" />
       case 'customerspecific':
-        return <Info color="info" />
+        return <CippIcons.Info color="info" />
       case 'aligned':
       case 'compliant':
-        return <CheckCircle color="success" />
+        return <CippIcons.CheckCircle color="success" />
       default:
-        return <Warning color="warning" />
+        return <CippIcons.Warning color="warning" />
     }
   }
 
@@ -540,7 +525,8 @@ const ManageDriftPage = () => {
   }
 
   // Helper function to create deviation items
-  const createDeviationItems = (deviations, statusOverride = null) => {
+  // preferRowStatus keeps the statusOverride id prefix but shows the row's own status.
+  const createDeviationItems = (deviations, statusOverride = null, preferRowStatus = false) => {
     return (deviations || [])
       .filter((deviation) => {
         // Filter out template deviations where the template cannot be found
@@ -591,11 +577,14 @@ const ManageDriftPage = () => {
         // If actually compliant (values match), mark as aligned regardless of input status
         // If license is skipped, mark as skipped
         // Otherwise use the provided status
+        const resolvedStatus = preferRowStatus
+          ? deviation.Status || statusOverride
+          : statusOverride || deviation.Status || deviation.state
         const actualStatus = isActuallyCompliant
           ? 'aligned'
           : isLicenseSkipped
             ? 'skipped'
-            : statusOverride || deviation.Status || deviation.state
+            : resolvedStatus
         const actualStatusText = isActuallyCompliant
           ? 'Compliant'
           : isLicenseSkipped
@@ -745,7 +734,7 @@ const ManageDriftPage = () => {
                                 justifyContent: 'center',
                               }}
                             >
-                              <Check sx={{ color: 'white', fontSize: 16 }} />
+                              <CippIcons.Check sx={{ color: 'white', fontSize: 16 }} />
                             </Box>
                             <Typography
                               variant="body2"
@@ -799,7 +788,7 @@ const ManageDriftPage = () => {
                                 justifyContent: 'center',
                               }}
                             >
-                              <Cancel sx={{ color: 'white', fontSize: 16 }} />
+                              <CippIcons.Cancel sx={{ color: 'white', fontSize: 16 }} />
                             </Box>
                             <Typography
                               variant="body2"
@@ -885,7 +874,7 @@ const ManageDriftPage = () => {
                                 justifyContent: 'center',
                               }}
                             >
-                              <Check sx={{ color: 'white', fontSize: 16 }} />
+                              <CippIcons.Check sx={{ color: 'white', fontSize: 16 }} />
                             </Box>
                             <Typography
                               variant="body2"
@@ -939,7 +928,7 @@ const ManageDriftPage = () => {
                                 justifyContent: 'center',
                               }}
                             >
-                              <Check sx={{ color: 'white', fontSize: 16 }} />
+                              <CippIcons.Check sx={{ color: 'white', fontSize: 16 }} />
                             </Box>
                             <Typography
                               variant="body2"
@@ -1011,7 +1000,7 @@ const ManageDriftPage = () => {
                               justifyContent: 'center',
                             }}
                           >
-                            <Check sx={{ color: 'white', fontSize: 16 }} />
+                            <CippIcons.Check sx={{ color: 'white', fontSize: 16 }} />
                           </Box>
                         )}
                         <Typography
@@ -1085,7 +1074,7 @@ const ManageDriftPage = () => {
                               justifyContent: 'center',
                             }}
                           >
-                            <Check sx={{ color: 'white', fontSize: 16 }} />
+                            <CippIcons.Check sx={{ color: 'white', fontSize: 16 }} />
                           </Box>
                         )}
                         <Typography
@@ -1170,7 +1159,8 @@ const ManageDriftPage = () => {
   )
   const deniedDeviationItems = createDeviationItems(
     processedDriftData.deniedDeviationsList,
-    'denied'
+    'denied',
+    true
   )
   const alignedStandardItems = createDeviationItems(processedDriftData.alignedStandards, 'aligned')
   const licenseMissingDeviationItems = createDeviationItems(
@@ -1498,7 +1488,7 @@ const ManageDriftPage = () => {
         {templateGuid && (
           <Button
             variant="outlined"
-            startIcon={<CompareArrows />}
+            startIcon={<CippIcons.CompareArrows />}
             onClick={(e) => {
               e.stopPropagation()
               setCompareTarget({ templateGuid, templateName: item.text })
@@ -1510,7 +1500,7 @@ const ManageDriftPage = () => {
         )}
         <Button
           variant="outlined"
-          endIcon={<ExpandMore />}
+          endIcon={<CippIcons.ExpandMore />}
           onClick={(e) => {
             e.stopPropagation()
             handleMenuClick(e, menuKey)
@@ -1994,7 +1984,7 @@ const ManageDriftPage = () => {
                       placeholder="Select a drift template..."
                       disableClearable={true}
                       customAction={{
-                        icon: <Edit fontSize="small" />,
+                        icon: <CippIcons.Edit />,
                         link: selectedTemplateOption?.value
                           ? `/tenant/standards/templates/template?id=${selectedTemplateOption.value}&type=drift`
                           : undefined,
@@ -2081,7 +2071,7 @@ const ManageDriftPage = () => {
                           {/* Bulk Actions Dropdown */}
                           <Button
                             variant="outlined"
-                            endIcon={<ExpandMore />}
+                            endIcon={<CippIcons.ExpandMore />}
                             onClick={(e) => setBulkActionsAnchorEl(e.currentTarget)}
                             size="small"
                           >
@@ -2095,30 +2085,30 @@ const ManageDriftPage = () => {
                             <MenuItem
                               onClick={() => handleBulkAction('accept-all-customer-specific')}
                             >
-                              <CheckBox sx={{ mr: 1, color: 'success.main' }} />
+                              <CippIcons.CheckBox sx={{ mr: 1, color: 'success.main' }} />
                               Accept Selected Deviations - Customer Specific
                             </MenuItem>
                             <MenuItem onClick={() => handleBulkAction('accept-all')}>
-                              <Check sx={{ mr: 1, color: 'info.main' }} />
+                              <CippIcons.Check sx={{ mr: 1, color: 'info.main' }} />
                               Accept Selected Deviations
                             </MenuItem>
                             {/* Delete only applies to Intune/CA policies that exist in the tenant
                                 but not in the template, so require every selected item to qualify */}
                             {selectedSupportDelete && (
                               <MenuItem onClick={() => handleBulkAction('deny-all-delete')}>
-                                <Block sx={{ mr: 1, color: 'error.main' }} />
+                                <CippIcons.Block sx={{ mr: 1, color: 'error.main' }} />
                                 Deny Selected Deviations - Delete
                               </MenuItem>
                             )}
                             {/* Remediate only applies to policies that are in the template */}
                             {selectedSupportRemediate && (
                               <MenuItem onClick={() => handleBulkAction('deny-all-remediate')}>
-                                <Cancel sx={{ mr: 1, color: 'error.main' }} />
+                                <CippIcons.Cancel sx={{ mr: 1, color: 'error.main' }} />
                                 Deny Selected Deviations - Remediate to align with template
                               </MenuItem>
                             )}
                             <MenuItem onClick={handleRemoveDriftCustomization}>
-                              <Block sx={{ mr: 1, color: 'warning.main' }} />
+                              <CippIcons.Block sx={{ mr: 1, color: 'warning.main' }} />
                               Remove Drift Customization
                             </MenuItem>
                           </Menu>
@@ -2277,7 +2267,7 @@ const ManageDriftPage = () => {
                 handleMenuClose(item.id)
               }}
             >
-              <CheckCircle sx={{ mr: 1, color: 'success.main' }} />
+              <CippIcons.CheckCircle sx={{ mr: 1, color: 'success.main' }} />
               Accept Deviation - Customer Specific
             </MenuItem>
             <MenuItem
@@ -2286,7 +2276,7 @@ const ManageDriftPage = () => {
                 handleMenuClose(item.id)
               }}
             >
-              <Check sx={{ mr: 1, color: 'info.main' }} />
+              <CippIcons.Check sx={{ mr: 1, color: 'info.main' }} />
               Accept Deviation
             </MenuItem>
             {supportsDeleteAction(item) && (
@@ -2296,7 +2286,7 @@ const ManageDriftPage = () => {
                   handleMenuClose(item.id)
                 }}
               >
-                <Block sx={{ mr: 1, color: 'error.main' }} />
+                <CippIcons.Block sx={{ mr: 1, color: 'error.main' }} />
                 Deny Deviation - Delete Policy
               </MenuItem>
             )}
@@ -2307,7 +2297,7 @@ const ManageDriftPage = () => {
                   handleMenuClose(item.id)
                 }}
               >
-                <Cancel sx={{ mr: 1, color: 'error.main' }} />
+                <CippIcons.Cancel sx={{ mr: 1, color: 'error.main' }} />
                 Deny Deviation - Remediate to align with template
               </MenuItem>
             )}
@@ -2330,7 +2320,7 @@ const ManageDriftPage = () => {
                   handleMenuClose(`accepted-${item.id}`)
                 }}
               >
-                <Block sx={{ mr: 1, color: 'error.main' }} />
+                <CippIcons.Block sx={{ mr: 1, color: 'error.main' }} />
                 Deny - Delete Policy
               </MenuItem>
             )}
@@ -2341,7 +2331,7 @@ const ManageDriftPage = () => {
                   handleMenuClose(`accepted-${item.id}`)
                 }}
               >
-                <Cancel sx={{ mr: 1, color: 'error.main' }} />
+                <CippIcons.Cancel sx={{ mr: 1, color: 'error.main' }} />
                 Deny - Remediate to align with template
               </MenuItem>
             )}
@@ -2351,7 +2341,7 @@ const ManageDriftPage = () => {
                 handleMenuClose(`accepted-${item.id}`)
               }}
             >
-              <CheckCircle sx={{ mr: 1, color: 'info.main' }} />
+              <CippIcons.CheckCircle sx={{ mr: 1, color: 'info.main' }} />
               Accept - Customer Specific
             </MenuItem>
           </Menu>
@@ -2373,7 +2363,7 @@ const ManageDriftPage = () => {
                   handleMenuClose(`customer-${item.id}`)
                 }}
               >
-                <Block sx={{ mr: 1, color: 'error.main' }} />
+                <CippIcons.Block sx={{ mr: 1, color: 'error.main' }} />
                 Deny - Delete
               </MenuItem>
             )}
@@ -2384,7 +2374,7 @@ const ManageDriftPage = () => {
                   handleMenuClose(`customer-${item.id}`)
                 }}
               >
-                <Cancel sx={{ mr: 1, color: 'error.main' }} />
+                <CippIcons.Cancel sx={{ mr: 1, color: 'error.main' }} />
                 Deny - Remediate to align with template
               </MenuItem>
             )}
@@ -2394,7 +2384,7 @@ const ManageDriftPage = () => {
                 handleMenuClose(`customer-${item.id}`)
               }}
             >
-              <Check sx={{ mr: 1, color: 'success.main' }} />
+              <CippIcons.Check sx={{ mr: 1, color: 'success.main' }} />
               Accept
             </MenuItem>
           </Menu>
@@ -2408,15 +2398,6 @@ const ManageDriftPage = () => {
           open={Boolean(anchorEl[`denied-${item.id}`])}
           onClose={() => handleMenuClose(`denied-${item.id}`)}
         >
-          <MenuItem
-            onClick={() => {
-              handleDeviationAction('deny', item)
-              handleMenuClose(`denied-${item.id}`)
-            }}
-          >
-            <Error sx={{ mr: 1, color: 'error.main' }} />
-            Rerun standard to align with template
-          </MenuItem>
           {supportsRemediateAction(item) && (
             <MenuItem
               onClick={() => {
@@ -2424,7 +2405,7 @@ const ManageDriftPage = () => {
                 handleMenuClose(`denied-${item.id}`)
               }}
             >
-              <Cancel sx={{ mr: 1, color: 'error.main' }} />
+              <CippIcons.Cancel sx={{ mr: 1, color: 'error.main' }} />
               Deny - Remediate to align with template
             </MenuItem>
           )}
@@ -2434,7 +2415,7 @@ const ManageDriftPage = () => {
               handleMenuClose(`denied-${item.id}`)
             }}
           >
-            <Check sx={{ mr: 1, color: 'success.main' }} />
+            <CippIcons.Check sx={{ mr: 1, color: 'success.main' }} />
             Accept
           </MenuItem>
           <MenuItem
@@ -2443,7 +2424,7 @@ const ManageDriftPage = () => {
               handleMenuClose(`denied-${item.id}`)
             }}
           >
-            <CheckCircle sx={{ mr: 1, color: 'info.main' }} />
+            <CippIcons.CheckCircle sx={{ mr: 1, color: 'info.main' }} />
             Accept - Customer Specific
           </MenuItem>
         </Menu>
@@ -2456,15 +2437,6 @@ const ManageDriftPage = () => {
           open={Boolean(anchorEl[`aligned-${item.id}`])}
           onClose={() => handleMenuClose(`aligned-${item.id}`)}
         >
-          <MenuItem
-            onClick={() => {
-              handleDeviationAction('deny', item)
-              handleMenuClose(`aligned-${item.id}`)
-            }}
-          >
-            <Error sx={{ mr: 1, color: 'error.main' }} />
-            Rerun standard to align with template
-          </MenuItem>
           {supportsRemediateAction(item) && (
             <MenuItem
               onClick={() => {
@@ -2472,28 +2444,17 @@ const ManageDriftPage = () => {
                 handleMenuClose(`aligned-${item.id}`)
               }}
             >
-              <Cancel sx={{ mr: 1, color: 'error.main' }} />
+              <CippIcons.Cancel sx={{ mr: 1, color: 'error.main' }} />
               Deny - Remediate to align with template
             </MenuItem>
           )}
         </Menu>
       ))}
 
-      {/* Hidden ExecutiveReportButton that gets triggered programmatically */}
+      {/* Hidden ExecutiveReportButton that gets triggered programmatically; it loads its own
+          report data, so it takes no tenant props. */}
       <Box sx={{ position: 'absolute', top: -9999, left: -9999 }}>
-        <ExecutiveReportButton
-          ref={reportButtonRef}
-          tenantName={currentTenantData?.displayName || tenantFilter}
-          tenantId={currentTenantData?.customerId}
-          userStats={{
-            licensedUsers: 0, // These would come from actual user data APIs
-            unlicensedUsers: 0,
-            guests: 0,
-            globalAdmins: 0,
-          }}
-          standardsData={standardsApi.data}
-          organizationData={currentTenantData}
-        />
+        <ExecutiveReportButton ref={reportButtonRef} />
       </Box>
     </HeaderedTabbedLayout>
   );

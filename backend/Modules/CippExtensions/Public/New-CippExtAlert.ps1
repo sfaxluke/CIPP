@@ -15,11 +15,13 @@ function New-CippExtAlert {
                 if ($Configuration.HaloPSA.enabled) {
                     $MappingFile = Get-CIPPAzDataTableEntity @MappingTable -Filter "PartitionKey eq 'HaloMapping'"
                     $TenantId = (Get-Tenants -TenantFilter $Alert.TenantId).customerId
-                    Write-Host "TenantId: $TenantId"
                     $MappedId = ($MappingFile | Where-Object { $_.RowKey -eq $TenantId }).IntegrationId
-                    Write-Host "MappedId: $MappedId"
-                    if (!$mappedId) { $MappedId = 1 }
-                    Write-Host "MappedId: $MappedId"
+                    if (!$MappedId) {
+                        # Unmapped tenants land on client 1; say so instead of doing it silently.
+                        $MappedId = 1
+                        Write-LogMessage -API 'HaloPSATicket' -tenant $Alert.TenantId -message "No HaloPSA client mapping for tenant $($Alert.TenantId) - the ticket was raised against Halo client id 1. Map the tenant under Settings > Integrations > HaloPSA." -sev Warning
+                    }
+                    Write-Information "HaloPSA client for tenant $($Alert.TenantId): $MappedId"
 
                     $TicketParams = @{
                         Title       = $Alert.AlertTitle

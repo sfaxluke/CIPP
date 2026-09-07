@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { CippIcons } from '../../utils/icon-registry'
 import {
   CircularProgress,
   Dialog,
@@ -8,14 +9,6 @@ import {
   Skeleton,
   Typography,
 } from '@mui/material'
-import { Close } from '@mui/icons-material'
-import {
-  ArrowDownTrayIcon,
-  CodeBracketIcon,
-  DocumentTextIcon,
-  EyeIcon,
-  NoSymbolIcon,
-} from '@heroicons/react/24/outline'
 import { CippTablePage } from './CippTablePage.jsx'
 import { CippMessageViewer } from './CippMessageViewer.jsx'
 import { CippDataTable } from '../CippTable/CippDataTable'
@@ -68,7 +61,18 @@ export const CippUserReportedMessagesTable = () => {
   const [traceDetails, setTraceDetails] = useState([])
   const [traceMessageId, setTraceMessageId] = useState(null)
   const [traceTenant, setTraceTenant] = useState(null)
+  const [traceWindow, setTraceWindow] = useState(null)
   const [messageSubject, setMessageSubject] = useState(null)
+
+  // Graph's message trace window caps at 10 days and defaults to ~48h with none supplied,
+  // so pin an explicit +/-1 day window around the message's received time when we have one.
+  const getTraceWindow = (receivedTime) => {
+    if (!receivedTime) return null
+    const receivedMs = new Date(receivedTime).getTime()
+    if (Number.isNaN(receivedMs)) return null
+    const receivedSeconds = Math.floor(receivedMs / 1000)
+    return { startDate: receivedSeconds - 86400, endDate: receivedSeconds + 86400 }
+  }
 
   const contentParams = (row) => ({
     tenantFilter: resolveTenant(row),
@@ -134,13 +138,16 @@ export const CippUserReportedMessagesTable = () => {
   const viewMessageTrace = (...args) => {
     const row = resolveRow(...args)
     const rowTenant = resolveTenant(row)
+    const window = getTraceWindow(row.ReceivedDateTime)
     setTraceTenant(rowTenant)
     setTraceMessageId(row.InternetMessageId)
+    setTraceWindow(window)
     getMessageTraceDetails.mutate({
       url: '/api/ListMessageTrace',
       data: {
         tenantFilter: rowTenant,
         messageId: row.InternetMessageId,
+        ...(window ?? {}),
       },
     })
     setMessageSubject(row.Subject)
@@ -186,7 +193,7 @@ export const CippUserReportedMessagesTable = () => {
       label: 'Preview Message',
       noConfirm: true,
       customFunction: viewMessage,
-      icon: <EyeIcon />,
+      icon: <CippIcons.EyeIcon />,
       hideBulk: true,
       condition: (row) => Boolean(row.InternetMessageId),
     },
@@ -194,7 +201,7 @@ export const CippUserReportedMessagesTable = () => {
       label: 'View Message Headers',
       noConfirm: true,
       customFunction: viewHeaders,
-      icon: <CodeBracketIcon />,
+      icon: <CippIcons.CodeBracketIcon />,
       hideBulk: true,
       condition: (row) => Boolean(row.InternetMessageId),
     },
@@ -202,7 +209,7 @@ export const CippUserReportedMessagesTable = () => {
       label: 'Download Message (.eml)',
       noConfirm: true,
       customFunction: downloadMessage,
-      icon: <ArrowDownTrayIcon />,
+      icon: <CippIcons.ArrowDownTrayIcon />,
       hideBulk: true,
       condition: (row) => Boolean(row.InternetMessageId),
     },
@@ -210,7 +217,7 @@ export const CippUserReportedMessagesTable = () => {
       label: 'View Message Trace',
       noConfirm: true,
       customFunction: viewMessageTrace,
-      icon: <DocumentTextIcon />,
+      icon: <CippIcons.DocumentTextIcon />,
       hideBulk: true,
       condition: (row) => Boolean(row.InternetMessageId),
     },
@@ -238,7 +245,7 @@ export const CippUserReportedMessagesTable = () => {
       ],
       confirmText:
         'Block sender [Sender] by adding an entry to the Tenant Allow/Block List?',
-      icon: <NoSymbolIcon />,
+      icon: <CippIcons.NoSymbolIcon />,
       condition: (row) => Boolean(row.Sender),
     },
   ]
@@ -313,7 +320,7 @@ export const CippUserReportedMessagesTable = () => {
             onClick={() => setDialogOpen(false)}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
-            <Close />
+            <CippIcons.Close />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
@@ -335,7 +342,7 @@ export const CippUserReportedMessagesTable = () => {
             onClick={() => setHeaderDialogOpen(false)}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
-            <Close />
+            <CippIcons.Close />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
@@ -367,7 +374,7 @@ export const CippUserReportedMessagesTable = () => {
             onClick={() => setTraceDialogOpen(false)}
             sx={{ position: 'absolute', right: 8, top: 8 }}
           >
-            <Close />
+            <CippIcons.Close />
           </IconButton>
         </DialogTitle>
         <DialogContent dividers>
@@ -389,6 +396,7 @@ export const CippUserReportedMessagesTable = () => {
                   data: {
                     tenantFilter: traceTenant,
                     messageId: traceMessageId,
+                    ...(traceWindow ?? {}),
                   },
                 })
               }

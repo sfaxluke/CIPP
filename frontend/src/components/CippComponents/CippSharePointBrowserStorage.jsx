@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CippIcons } from '../../utils/icon-registry'
 import PropTypes from 'prop-types'
 import {
   Alert,
@@ -24,16 +25,8 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import {
-  CleaningServices,
-  Close,
-  Assessment,
-  OpenInNew,
-  Refresh,
-  Storage as StorageIcon,
-} from '@mui/icons-material'
 import { CippApiDialog } from './CippApiDialog'
-import { CippSharePointVersionCleanupFields } from './CippSharePointVersionCleanupFields'
+import { CippSharePointVersionCleanupFields, formatVersionPolicy } from './CippSharePointVersionCleanupFields'
 import { CippPropertyList } from './CippPropertyList'
 import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { useDialog } from '../../hooks/use-dialog'
@@ -87,40 +80,6 @@ const toBytesFromMb = (mb) => {
   const num = Number(mb)
   if (Number.isNaN(num)) return null
   return num * 1024 * 1024
-}
-
-const formatVersionPolicy = (props) => {
-  if (!props || typeof props !== 'object') return null
-  if (props.InheritVersionPolicyFromTenant) return 'Tenant default'
-  const major =
-    props.MajorVersionLimit === null || props.MajorVersionLimit === undefined
-      ? null
-      : Number(props.MajorVersionLimit)
-  const days =
-    props.ExpireVersionsAfterDays === null || props.ExpireVersionsAfterDays === undefined
-      ? null
-      : Number(props.ExpireVersionsAfterDays)
-
-  if (props.EnableAutoExpirationVersionTrim) {
-    const parts = ['Auto trim']
-    if (major !== null && !Number.isNaN(major) && major > 0) {
-      parts.push(`${major.toLocaleString()} major`)
-    }
-    if (days !== null && !Number.isNaN(days) && days > 0) {
-      parts.push(`${days.toLocaleString()} days`)
-    }
-    return parts.join(' · ')
-  }
-
-  if (major !== null && !Number.isNaN(major)) {
-    if (major <= 0) return 'Unlimited / not set'
-    const label = `${major.toLocaleString()} major versions`
-    if (days !== null && !Number.isNaN(days) && days > 0) {
-      return `${label} · expire after ${days.toLocaleString()} days`
-    }
-    return label
-  }
-  return null
 }
 
 const jobStatusChip = (progress) => {
@@ -311,12 +270,12 @@ export const CippSharePointBrowserStorage = ({
                   onClick={refreshAll}
                   disabled={!siteUrl || glanceLoading}
                 >
-                  <Refresh />
+                  <CippIcons.Refresh />
                 </IconButton>
               </span>
             </Tooltip>
             <IconButton aria-label="Close" onClick={handleClose}>
-              <Close />
+              <CippIcons.Close />
             </IconButton>
           </Stack>
         </DialogTitle>
@@ -354,7 +313,7 @@ export const CippSharePointBrowserStorage = ({
                         }}>
                         <Chip
                           size="small"
-                          icon={<StorageIcon />}
+                          icon={<CippIcons.Storage />}
                           color={nearWarning ? 'warning' : 'default'}
                           label={
                             quotaLabel
@@ -412,22 +371,13 @@ export const CippSharePointBrowserStorage = ({
                         </Alert>
                       ) : (
                         <Alert severity="info">
-                          Site capacity triage for this site. For tenant-wide health use the Storage
-                          Report. Recycle is in the explorer Recycle mode.
+                          Site capacity triage for this site. Recycle is in the explorer Recycle mode.
                         </Alert>
                       )}
 
                       <Stack direction="row" spacing={1} useFlexGap sx={{
                         flexWrap: "wrap"
                       }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          href="/teams-share/storage-report"
-                          startIcon={<OpenInNew />}
-                        >
-                          Storage Report
-                        </Button>
                         {stormanHref ? (
                           <Button
                             size="small"
@@ -435,7 +385,7 @@ export const CippSharePointBrowserStorage = ({
                             href={stormanHref}
                             target="_blank"
                             rel="noopener noreferrer"
-                            startIcon={<Assessment />}
+                            startIcon={<CippIcons.Assessment />}
                           >
                             Storage Metrics
                           </Button>
@@ -584,7 +534,7 @@ export const CippSharePointBrowserStorage = ({
                     <Button
                       size="small"
                       variant="outlined"
-                      startIcon={<Refresh />}
+                      startIcon={<CippIcons.Refresh />}
                       onClick={fetchJobStatus}
                       disabled={jobStatusApi.isPending}
                     >
@@ -593,7 +543,7 @@ export const CippSharePointBrowserStorage = ({
                     <Tooltip
                       title={
                         canWriteSite
-                          ? 'Start version cleanup'
+                          ? 'Open version cleanup options'
                           : 'Requires SharePoint write permission'
                       }
                     >
@@ -601,11 +551,11 @@ export const CippSharePointBrowserStorage = ({
                         <Button
                           size="small"
                           variant="contained"
-                          startIcon={<CleaningServices />}
+                          startIcon={<CippIcons.CleaningServices />}
                           disabled={!canWriteSite}
                           onClick={() => startCleanupDialog.handleOpen()}
                         >
-                          Start cleanup
+                          Configure version cleanup…
                         </Button>
                       </span>
                     </Tooltip>
@@ -659,10 +609,15 @@ export const CippSharePointBrowserStorage = ({
 
       <CippApiDialog
         createDialog={startCleanupDialog}
-        title="Start Version Cleanup"
+        title="Configure Version Cleanup"
         relatedQueryKeys={[]}
         allowResubmit
-        defaultvalues={{ BatchDeleteMode: '2' }}
+        defaultvalues={{
+          BatchDeleteMode: '2',
+          DeleteOlderThanDays: 90,
+          MajorVersionLimit: 50,
+          MajorWithMinorVersionsLimit: 0,
+        }}
         api={{
           type: 'POST',
           url: '/api/ExecSiteBrowserActions',
@@ -688,7 +643,13 @@ export const CippSharePointBrowserStorage = ({
         }}
         row={item ?? {}}
       >
-        {({ formHook }) => <CippSharePointVersionCleanupFields formHook={formHook} />}
+        {({ formHook }) => (
+          <CippSharePointVersionCleanupFields
+            formHook={formHook}
+            tenantFilter={tenant}
+            siteUrl={siteUrl}
+          />
+        )}
       </CippApiDialog>
     </>
   );

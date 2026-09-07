@@ -1,8 +1,39 @@
 import { IconButton, Tooltip } from '@mui/material'
-import { PictureAsPdf } from '@mui/icons-material'
+import { CippIcons } from '../utils/icon-registry'
+import { useQueryClient } from '@tanstack/react-query'
 import { getCippFormatting } from '../utils/get-cipp-formatting'
 import { SKIP_RECURSION_KEYS } from '../utils/skip-recursion-keys'
-import { useBrandingSettings } from './CippPdf/useBrandingSettings'
+import { fetchBrandingSettings } from './CippPdf/useBrandingSettings'
+
+// Match branding preview maxWidth and sit close to report headerLogo height (30pt).
+const MAX_LOGO_WIDTH = 140
+const MAX_LOGO_HEIGHT = 36
+const LOGO_PADDING = 12
+
+const JSPDF_FORMAT_BY_MIME = {
+  'image/png': 'PNG',
+  'image/jpeg': 'JPEG',
+  'image/jpg': 'JPEG',
+  'image/webp': 'WEBP',
+}
+
+/**
+ * jsPDF format from a data URL. SVG and anything else return null so the export
+ * continues without a logo rather than forcing a PNG decode.
+ */
+export const detectJsPdfImageFormat = (dataUrl) => {
+  if (typeof dataUrl !== 'string') return null
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);/i)
+  if (!match) return null
+  return JSPDF_FORMAT_BY_MIME[match[1].toLowerCase()] ?? null
+}
+
+/** Scale intrinsic size into a contain box without upscaling. */
+export const fitLogoDimensions = (natW, natH, { maxWidth = MAX_LOGO_WIDTH, maxHeight = MAX_LOGO_HEIGHT } = {}) => {
+  if (!natW || !natH || natW <= 0 || natH <= 0) return null
+  const scale = Math.min(maxWidth / natW, maxHeight / natH, 1)
+  return { width: natW * scale, height: natH * scale }
+}
 
 // Flatten nested objects so deeply nested properties export properly.
 // This function only restructures data without formatting - formatting happens later in one pass.
@@ -64,13 +95,18 @@ export const exportRowsToPdf = async ({
   })
 
   let logoHeight = 0
-  if (brandingSettings?.logo) {
+  const logo = brandingSettings?.logo
+  const logoFormat = detectJsPdfImageFormat(logo)
+  if (logo && logoFormat) {
     try {
-      const logoSize = 60
-      const logoX = 40
-      const logoY = 30
-      doc.addImage(brandingSettings.logo, 'PNG', logoX, logoY, logoSize, logoSize)
-      logoHeight = logoSize + 20
+      const { width: natW, height: natH } = doc.getImageProperties(logo)
+      const fitted = fitLogoDimensions(natW, natH)
+      if (fitted) {
+        const logoX = 40
+        const logoY = 30
+        doc.addImage(logo, logoFormat, logoX, logoY, fitted.width, fitted.height)
+        logoHeight = fitted.height + LOGO_PADDING
+      }
     } catch (error) {
       console.warn('Failed to add logo to PDF:', error)
     }
@@ -158,25 +194,25 @@ export const exportRowsToPdf = async ({
 
 export const PDFExportButton = (props) => {
   const { rows = [], columns = [], reportName, columnVisibility = {}, ...other } = props
-  const brandingSettings = useBrandingSettings()
+  const queryClient = useQueryClient()
 
   return (
     <Tooltip title="Export to PDF">
       <span>
         <IconButton
           disabled={rows.length === 0}
-          onClick={() =>
+          onClick={async () =>
             exportRowsToPdf({
               rows,
               columns,
               reportName,
               columnVisibility,
-              brandingSettings,
+              brandingSettings: await fetchBrandingSettings(queryClient),
             })
           }
           {...other}
         >
-          <PictureAsPdf />
+          <CippIcons.PictureAsPdf />
         </IconButton>
       </span>
     </Tooltip>

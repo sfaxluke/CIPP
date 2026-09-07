@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CippIcons } from "../../../utils/icon-registry"
 import { useRouter } from "next/router";
 import NextLink from "next/link";
 import { Layout as DashboardLayout } from "../../../layouts/index";
@@ -27,17 +28,6 @@ import {
 import { Grid } from "@mui/system";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
-import {
-  Add,
-  AddBox,
-  Close,
-  DeleteOutlined,
-  ForkLeft,
-  MoreVert,
-  OpenInNew,
-  Search,
-  Sell,
-} from "@mui/icons-material";
 import { useForm, FormProvider } from "react-hook-form";
 import { ApiGetCall, ApiPostCall } from "../../../api/ApiCall";
 import { CippHead } from "../../../components/CippComponents/CippHead";
@@ -199,16 +189,22 @@ const Page = () => {
       <Container maxWidth="xl">
         <Stack spacing={2}>
           <Stack
-            direction="row"
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
             sx={{
               justifyContent: "space-between",
-              alignItems: "center"
+              alignItems: { xs: "stretch", md: "center" }
             }}>
             <Typography variant="h4">Catalog</Typography>
-            <Stack direction="row" spacing={1}>
+            {/* Actions stack full width under the title on phones so they never clip the viewport. */}
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
+              sx={{ "& > *": { flex: { sm: 1, md: "0 0 auto" } } }}
+            >
               <Button
                 variant="outlined"
-                startIcon={<Search />}
+                startIcon={<CippIcons.MagnifyingGlassIcon />}
                 component={NextLink}
                 href="/tools/community-repos/catalog"
               >
@@ -216,7 +212,7 @@ const Page = () => {
               </Button>
               <Button
                 variant="outlined"
-                startIcon={<AddBox />}
+                startIcon={<CippIcons.AddBox />}
                 onClick={() => setCreateDialogOpen(true)}
                 disabled={!integrations.isSuccess || !integrations?.data?.GitHub?.Enabled}
               >
@@ -224,7 +220,7 @@ const Page = () => {
               </Button>
               <Button
                 variant="contained"
-                startIcon={<Add />}
+                startIcon={<CippIcons.Add />}
                 onClick={() => setAddDialogOpen(true)}
               >
                 Add Source
@@ -270,7 +266,7 @@ const Page = () => {
                           </Typography>
                         </Box>
                         <IconButton size="small" onClick={(event) => handleOpenMenu(event, repo)}>
-                          <MoreVert fontSize="small" />
+                          <CippIcons.MoreVert fontSize="small" />
                         </IconButton>
                       </Stack>
                       {repo.Description && (
@@ -376,7 +372,7 @@ const Page = () => {
           }}
         >
           <ListItemIcon>
-            <OpenInNew fontSize="small" />
+            <CippIcons.OpenInNew fontSize="small" />
           </ListItemIcon>
           <ListItemText>Open on GitHub</ListItemText>
         </MenuItem>
@@ -393,7 +389,7 @@ const Page = () => {
             }}
           >
             <ListItemIcon>
-              <ForkLeft fontSize="small" />
+              <CippIcons.ForkLeft fontSize="small" />
             </ListItemIcon>
             <ListItemText>Set Upload Branch</ListItemText>
           </MenuItem>
@@ -414,7 +410,7 @@ const Page = () => {
             }}
           >
             <ListItemIcon>
-              <Sell fontSize="small" />
+              <CippIcons.Sell fontSize="small" />
             </ListItemIcon>
             <ListItemText>Set Template Type</ListItemText>
           </MenuItem>
@@ -427,7 +423,7 @@ const Page = () => {
             }}
           >
             <ListItemIcon>
-              <DeleteOutlined fontSize="small" />
+              <CippIcons.DeleteOutlined fontSize="small" />
             </ListItemIcon>
             <ListItemText>Remove Source</ListItemText>
           </MenuItem>
@@ -476,14 +472,14 @@ const Page = () => {
           <Button
             variant="outlined"
             onClick={() => setAddDialogOpen(false)}
-            startIcon={<Close />}
+            startIcon={<CippIcons.Close />}
           >
             Close
           </Button>
           <Button
             variant="contained"
             onClick={handleAddRepo}
-            startIcon={<Add />}
+            startIcon={<CippIcons.Add />}
             disabled={addMutation.isPending}
           >
             Add
@@ -567,7 +563,7 @@ const Page = () => {
           <Button
             variant="outlined"
             onClick={() => setCreateDialogOpen(false)}
-            startIcon={<Close />}
+            startIcon={<CippIcons.Close />}
           >
             Close
           </Button>
@@ -575,7 +571,7 @@ const Page = () => {
             variant="contained"
             type="submit"
             onClick={createForm.handleSubmit(handleCreateRepo)}
-            startIcon={<Add />}
+            startIcon={<CippIcons.Add />}
             disabled={createMutation.isPending}
           >
             Create
@@ -614,7 +610,7 @@ const Page = () => {
           <CippApiResults apiObject={branchMutation} />
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setBranchDialogRepo(null)} startIcon={<Close />}>
+          <Button variant="outlined" onClick={() => setBranchDialogRepo(null)} startIcon={<CippIcons.Close />}>
             Close
           </Button>
           <Button
@@ -659,7 +655,7 @@ const Page = () => {
           <CippApiResults apiObject={typesMutation} />
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setTypesDialogRepo(null)} startIcon={<Close />}>
+          <Button variant="outlined" onClick={() => setTypesDialogRepo(null)} startIcon={<CippIcons.Close />}>
             Close
           </Button>
           <Button
@@ -697,7 +693,7 @@ const Page = () => {
           <CippApiResults apiObject={deleteMutation} />
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setDeleteDialogRepo(null)} startIcon={<Close />}>
+          <Button variant="outlined" onClick={() => setDeleteDialogRepo(null)} startIcon={<CippIcons.Close />}>
             Close
           </Button>
           <Button

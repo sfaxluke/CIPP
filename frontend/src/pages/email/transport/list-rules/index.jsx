@@ -1,7 +1,6 @@
 import { Layout as DashboardLayout } from "../../../../layouts/index";
+import { CippIcons } from "../../../../utils/icon-registry"
 import { CippTablePage } from "../../../../components/CippComponents/CippTablePage.jsx";
-import { Book, DoDisturb, Done, Edit } from "@mui/icons-material";
-import { TrashIcon } from "@heroicons/react/24/outline";
 import { CippAddTransportRuleDrawer } from "../../../../components/CippComponents/CippAddTransportRuleDrawer";
 import { CippTransportRuleDrawer } from "../../../../components/CippComponents/CippTransportRuleDrawer";
 import { useSettings } from "../../../../hooks/use-settings";
@@ -26,8 +25,10 @@ const Page = () => {
       type: "POST",
       url: "/api/AddTransportTemplate",
       postEntireRow: true,
+      // The bulk menu nests each row under a numeric key, which loses the row's properties.
+      hideBulk: true,
       confirmText: "Are you sure you want to create a template based on this rule?",
-      icon: <Book />,
+      icon: <CippIcons.Book />,
     },
     {
       label: "Enable Rule",
@@ -40,7 +41,7 @@ const Page = () => {
       },
       condition: (row) => row.State === "Disabled",
       confirmText: "Are you sure you want to enable this rule?",
-      icon: <Done />,
+      icon: <CippIcons.Done />,
     },
     {
       label: "Edit Rule",
@@ -54,7 +55,7 @@ const Page = () => {
           setDrawerVisible={setDrawerVisible}
         />
       ),
-      icon: <Edit />,
+      icon: <CippIcons.Edit />,
       multiPost: false,
     },
     {
@@ -68,7 +69,7 @@ const Page = () => {
       },
       condition: (row) => row.State === "Enabled",
       confirmText: "Are you sure you want to disable this rule?",
-      icon: <DoDisturb />,
+      icon: <CippIcons.DoDisturb />,
     },
     {
       label: "Delete Rule",
@@ -79,7 +80,7 @@ const Page = () => {
       },
       confirmText: "Are you sure you want to delete this rule?",
       color: "danger",
-      icon: <TrashIcon />,
+      icon: <CippIcons.Delete />,
     },
   ];
 

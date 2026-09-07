@@ -1768,7 +1768,7 @@
     "cat": "Entra (AAD) Standards",
     "tag": ["SMB1001 (2.8)"],
     "appliesToTest": ["SMB1001_2_8", "ZTNA21858"],
-    "helpText": "Blocks login for guest users that have not logged in for a number of days",
+    "helpText": "Blocks login for guest users whose most recent sign-in attempt, interactive or non-interactive, is older than the number of days. Guests that have never signed in are only included when 'Disable accounts that have not yet signed in' is enabled. Accounts an administrator re-enabled in the last 7 days are left alone.",
     "executiveText": "Automatically disables external guest accounts that haven't been used for a number of days, reducing security risks from dormant accounts while maintaining access for active external collaborators. This helps maintain a clean user directory and reduces potential attack vectors.",
     "addedComponent": [
       {
@@ -1777,6 +1777,12 @@
         "required": true,
         "defaultValue": 90,
         "label": "Days of inactivity"
+      },
+      {
+        "type": "switch",
+        "name": "standards.DisableGuests.IncludeNeverSignedIn",
+        "label": "Disable accounts that have not yet signed in",
+        "defaultValue": false
       }
     ],
     "label": "Disable Guest accounts that have not logged on for a number of days",
@@ -5447,6 +5453,40 @@
     "addedDate": "2024-04-20",
     "powershellEquivalent": "Update-MgBetaAdminSharePointSetting",
     "recommendedBy": [],
+    "requiredCapabilities": [
+      "SHAREPOINTWAC",
+      "SHAREPOINTSTANDARD",
+      "SHAREPOINTENTERPRISE",
+      "SHAREPOINTENTERPRISE_EDU",
+      "ONEDRIVE_BASIC",
+      "ONEDRIVE_ENTERPRISE"
+    ]
+  },
+  {
+    "name": "standards.SPGuestPeoplePicker",
+    "cat": "SharePoint Standards",
+    "tag": [],
+    "helpText": "Controls whether guest (external) users already in the tenant appear as suggestions in the SharePoint and OneDrive People Picker. Enforces the wanted state on BOTH the tenant default and every existing site collection - they are set independently, so changing the tenant default does not update existing sites. The per-site picture is read from the SharePoint reporting cache (refreshed daily), so a large tenant is never enumerated live during a run; a 24h rerun guard stops the write sweep from repeating before that cache refreshes and re-evaluates the result.",
+    "executiveText": "Makes existing external collaborators discoverable (or hidden) when sharing SharePoint and OneDrive content, consistently across the tenant default and every existing site. This keeps the sharing experience predictable and prevents individual sites from drifting away from the agreed collaboration posture.",
+    "addedComponent": [
+      {
+        "type": "autoComplete",
+        "multiple": false,
+        "creatable": false,
+        "label": "Guest People Picker suggestions",
+        "name": "standards.SPGuestPeoplePicker.state",
+        "options": [
+          { "label": "Show guests in the People Picker", "value": "true" },
+          { "label": "Hide guests in the People Picker", "value": "false" }
+        ]
+      }
+    ],
+    "label": "Show guest users in the SharePoint People Picker",
+    "impact": "Low Impact",
+    "impactColour": "info",
+    "addedDate": "2026-09-03",
+    "powershellEquivalent": "Set-SPOTenant / Set-SPOSite -ShowPeoplePickerSuggestionsForGuestUsers $true or $false",
+    "recommendedBy": ["CIPP"],
     "requiredCapabilities": [
       "SHAREPOINTWAC",
       "SHAREPOINTSTANDARD",

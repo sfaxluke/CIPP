@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-
+import { CippIcons } from "../../utils/icon-registry";
 import {
   Box,
   Button,
@@ -15,16 +15,12 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
-
 import { Grid } from "@mui/system";
 import { ApiGetCall, ApiGetCallWithPagination, ApiPostCall } from "../../api/ApiCall";
 import { CippOffCanvas } from "../CippComponents/CippOffCanvas";
 import { CippFormTenantSelector } from "../CippComponents/CippFormTenantSelector";
-import { Save, WarningOutlined } from "@mui/icons-material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CippFormComponent from "../CippComponents/CippFormComponent";
 import { useForm, useFormState, useWatch } from "react-hook-form";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { CippApiResults } from "../CippComponents/CippApiResults";
 import cippRoles from "../../data/cipp-roles.json";
 import { GroupHeader, GroupItems } from "../CippComponents/CippAutocompleteGrouping";
@@ -37,6 +33,9 @@ import {
   validateRulePattern,
   buildRuleSuggestions,
 } from "../../utils/permission-rules";
+
+// Stable reference so the ApiGetCall default doesn't retrigger effects every render.
+const EMPTY_PERMISSIONS = [];
 
 export const CippRoleAddEdit = ({ selectedRole }) => {
   const updatePermissions = ApiPostCall({
@@ -116,7 +115,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
   }, [baseRoleTemplate]);
 
   const {
-    data: apiPermissions = [],
+    data: apiPermissions = EMPTY_PERMISSIONS,
     isFetching: apiPermissionFetching,
     isSuccess: apiPermissionSuccess,
   } = ApiGetCall({
@@ -230,10 +229,15 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
 
   useEffect(() => {
     if (selectedRole && cippRoles[selectedRole]) {
-      setBaseRolePermissions(getBaseRolePermissions(selectedRole));
+      // Skip the setState when both the old and new value are empty (e.g. apiPermissions
+      // still pending) so this doesn't create a fresh {} reference on every render.
+      setBaseRolePermissions((prev) => {
+        const next = getBaseRolePermissions(selectedRole);
+        return Object.keys(prev).length === 0 && Object.keys(next).length === 0 ? prev : next;
+      });
       setIsBaseRole(true);
     } else {
-      setBaseRolePermissions({});
+      setBaseRolePermissions((prev) => (Object.keys(prev).length === 0 ? prev : {}));
       setIsBaseRole(false);
     }
   }, [selectedRole, apiPermissions]);
@@ -244,7 +248,8 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
         tenantsSuccess &&
         selectedRole &&
         selectedRoleState !== selectedRole) ||
-      baseRolePermissions
+      // An empty {} isn't a real change — only a populated baseRolePermissions should retrigger this.
+      Object.keys(baseRolePermissions).length > 0
     ) {
       setSelectedRoleState(selectedRole);
       const isApiRole = selectedRole === "api-role";
@@ -522,7 +527,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
         }}>
           <Button onClick={() => setOffcanvasVisible(true)} size="sm" color="info">
             <SvgIcon fontSize="small">
-              <InformationCircleIcon />
+              <CippIcons.InformationCircleIcon />
             </SvgIcon>
           </Button>
           <CippFormComponent
@@ -583,7 +588,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
                             sx={{ minWidth: "auto", p: 0.5 }}
                           >
                             <SvgIcon fontSize="small" color="info">
-                              <InformationCircleIcon />
+                              <CippIcons.InformationCircleIcon />
                             </SvgIcon>
                           </Button>
                         )}
@@ -637,7 +642,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
               />
             )}
             {selectedRole && isBaseRole && ["admin", "superadmin"].includes(selectedRole) && (
-              <Alert color="warning" icon={<WarningOutlined />}>
+              <Alert color="warning" icon={<CippIcons.WarningOutlined />}>
                 This is a highly privileged role and overrides any custom role restrictions.
               </Alert>
             )}
@@ -1032,7 +1037,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
                           }
                           icon={
                             (ruleExpansion.includeCounts[pattern] ?? 0) === 0 ? (
-                              <WarningOutlined />
+                              <CippIcons.WarningOutlined />
                             ) : undefined
                           }
                         />
@@ -1047,7 +1052,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
                           }
                           icon={
                             (ruleExpansion.excludeCounts[pattern] ?? 0) === 0 ? (
-                              <WarningOutlined />
+                              <CippIcons.WarningOutlined />
                             ) : undefined
                           }
                         />
@@ -1114,7 +1119,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
                         return (
                           <Accordion variant="outlined" disableGutters key={permission}>
                             <AccordionSummary
-                              expandIcon={<ExpandMoreIcon />}
+                              expandIcon={<CippIcons.ExpandMore />}
                               sx={{ "& .MuiAccordionSummary-content": { minWidth: 0 } }}
                             >
                               <Stack
@@ -1240,7 +1245,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
                         .sort()
                         .map((cat, catIndex) => (
                           <Accordion variant="outlined" key={`accordion-item-${catIndex}`}>
-                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <AccordionSummary expandIcon={<CippIcons.ExpandMore />}>
                               {cat}
                             </AccordionSummary>
                             <AccordionDetails>
@@ -1386,7 +1391,7 @@ export const CippRoleAddEdit = ({ selectedRole }) => {
           }
           startIcon={
             <SvgIcon fontSize="small">
-              <Save />
+              <CippIcons.Save />
             </SvgIcon>
           }
           onClick={handleSubmit}

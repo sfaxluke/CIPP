@@ -16,10 +16,14 @@ function Clear-CIPPMobileDevice {
         $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Get-MobileDevice' -Anchor $Username -cmdParams @{mailbox = $Username } | ForEach-Object {
             try {
                 $MobileDevice = $_
+                # FriendlyName is usually empty; fall back like the ActiveSync device list.
+                $DeviceName = @($MobileDevice.FriendlyName, $MobileDevice.DeviceModel, $MobileDevice.DeviceOS, $MobileDevice.DeviceId) |
+                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
+                if (-not $DeviceName) { $DeviceName = 'Unknown device' }
                 $null = New-ExoRequest -tenantid $TenantFilter -cmdlet 'Clear-MobileDevice' -Anchor $Username -cmdParams @{Identity = $MobileDevice.Identity; AccountOnly = $true }
-                $WipedDevices.Add("$($MobileDevice.FriendlyName)")
+                $WipedDevices.Add([string]$DeviceName)
             } catch {
-                $ErrorDevices.Add("$($MobileDevice.FriendlyName)")
+                $ErrorDevices.Add([string]$DeviceName)
             }
         }
         if ($ErrorDevices.Count -eq 0) {

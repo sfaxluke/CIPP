@@ -21,8 +21,10 @@ function Invoke-ListJITRoleTemplates {
         try {
             $row = $_
             $data = $row.JSON | ConvertFrom-Json -Depth 100 -ErrorAction Stop
-            $data | Add-Member -NotePropertyName 'GUID' -NotePropertyValue $row.GUID -Force
-            $data | Add-Member -NotePropertyName 'RowKey' -NotePropertyValue $row.RowKey -Force
+            $data | Add-Member -NotePropertyMembers ([ordered]@{
+                    GUID   = $row.GUID
+                    RowKey = $row.RowKey
+                }) -Force
             $data
         } catch {
             Write-LogMessage -headers $Headers -API $APIName -message "Failed to process JIT Role template: $($row.RowKey) - $($_.Exception.Message)" -sev 'Warning'

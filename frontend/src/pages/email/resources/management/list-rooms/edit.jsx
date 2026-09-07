@@ -1,6 +1,6 @@
 import { useEffect } from "react";
+import { CippIcons } from "../../../../../utils/icon-registry";
 import { Alert, Box, Divider, IconButton, Tooltip, Typography } from "@mui/material";
-import { Sync } from "@mui/icons-material";
 import { Grid } from "@mui/system";
 import { useForm, useWatch } from "react-hook-form";
 import { Layout as DashboardLayout } from "../../../../../layouts/index";
@@ -174,7 +174,9 @@ const EditRoomMailbox = () => {
     <CippFormPage
       formControl={formControl}
       queryKey={`Room-${roomId}`}
-      title="Edit Room Mailbox"
+      title="Room Mailbox"
+      formPageType="Edit"
+      hideSubmit={!roomId}
       backButtonTitle="Room Mailboxes Overview"
       postUrl="/api/EditRoomMailbox"
       customDataformatter={(values) => ({
@@ -232,6 +234,11 @@ const EditRoomMailbox = () => {
         WorkingHoursTimeZone: values.WorkingHoursTimeZone?.value || values.WorkingHoursTimeZone,
       })}
     >
+      {!roomId && (
+        <Alert severity="info">
+          No room mailbox selected. Open this page from the Room Mailboxes list.
+        </Alert>
+      )}
       {roomInfo.isFetching && (
         <CippFormSkeleton layout={[2, 3, 1, 2, 3, 2, 1, 2, 3, 1, 3, 1, 3, 1]} />
       )}
@@ -243,7 +250,7 @@ const EditRoomMailbox = () => {
               <Typography variant="subtitle1">Basic Information</Typography>
               <Tooltip title="Refresh">
                 <IconButton size="small" onClick={() => roomInfo.refetch()}>
-                  <Sync fontSize="small" />
+                  <CippIcons.Sync fontSize="small" />
                 </IconButton>
               </Tooltip>
             </Box>

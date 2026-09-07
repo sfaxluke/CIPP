@@ -38,7 +38,8 @@ function Add-CIPPScheduledTask {
                 $ExistingTask.TaskState = 'Planned'
                 Add-CIPPAzDataTableEntity @Table -Entity $ExistingTask -Force
                 Write-LogMessage -headers $Headers -API 'RunNow' -message "Task $($ExistingTask.Name) scheduled to run now" -Sev 'Info' -Tenant $ExistingTask.Tenant
-                Add-CippQueueMessage -Cmdlet 'Start-UserTasksOrchestrator' -Parameters @{
+                # Add-CippQueueMessage returns $true; without discarding it the caller's Results array shows a bare 'true'
+                $null = Add-CippQueueMessage -Cmdlet 'Start-UserTasksOrchestrator' -Parameters @{
                     TaskId = $RowKey
                 }
                 return "Task $($ExistingTask.Name) scheduled to run now"
@@ -58,7 +59,7 @@ function Add-CIPPScheduledTask {
                 $Filter = "PartitionKey eq 'ScheduledTask' and Name eq '$($Task.Name)' and TaskState ne 'Completed' and TaskState ne 'Failed'"
                 $ExistingTask = (Get-CIPPAzDataTableEntity @Table -Filter $Filter)
                 if ($ExistingTask) {
-                    return "Task with name $($Task.Name) already exists"
+                    return "Error - A scheduled task named '$($Task.Name)' already exists and was not created again."
                 }
             }
 
@@ -294,6 +295,13 @@ function Add-CIPPScheduledTask {
                 }
             }
 
+            # Stored verbatim so the orchestrator expands groups at run time. The version marker tells
+            # it excludedTenants holds only the operator's picks, not a snapshot of unselected tenants.
+            if ($task.Tenants) {
+                $entity['Tenants'] = $task.Tenants -is [string] ? [string]$task.Tenants : [string]($task.Tenants | ConvertTo-Json -Compress -Depth 10)
+                $entity['TenantSelectionVersion'] = 2
+            }
+
             if ($task.Trigger) {
                 $entity.Trigger = [string]($task.Trigger | ConvertTo-Json -Compress)
                 $TriggerType = $task.Trigger.Type.value ?? $task.Trigger.Type
@@ -362,7 +370,8 @@ function Add-CIPPScheduledTask {
             }
 
             if ($RunNow.IsPresent) {
-                Add-CippQueueMessage -Cmdlet 'Start-UserTasksOrchestrator' -Parameters @{
+                # Add-CippQueueMessage returns $true; without discarding it the caller's Results array shows a bare 'true'
+                $null = Add-CippQueueMessage -Cmdlet 'Start-UserTasksOrchestrator' -Parameters @{
                     TaskId = $RowKey
                 }
                 return "Task $($entity.Name) scheduled to run now"

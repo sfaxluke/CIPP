@@ -1,8 +1,7 @@
 import { Layout as DashboardLayout } from '../../../../layouts/index'
+import { CippIcons } from '../../../../utils/icon-registry'
 import { CippTablePage } from '../../../../components/CippComponents/CippTablePage.jsx'
 import { CippApiDialog } from '../../../../components/CippComponents/CippApiDialog.jsx'
-import { GlobeAltIcon, TrashIcon, UserIcon, UserGroupIcon } from '@heroicons/react/24/outline'
-import { LaptopMac, Sync, BookmarkAdd } from '@mui/icons-material'
 import { CippApplicationDeployDrawer } from '../../../../components/CippComponents/CippApplicationDeployDrawer'
 import { Button } from '@mui/material'
 import { Stack } from '@mui/system'
@@ -40,14 +39,14 @@ const getAppAssignmentSettingsType = (odataType) => {
   return odataType.replace('#microsoft.graph.', '').replace(/App$/i, '');
 }
 
+// Only Office and Edge rebuild from a stored Graph body; win32LobApp (uploaded .intunewin) and
+// winGetApp (no PackageName) cannot be templated, so they return null.
 const mapOdataToAppType = (odataType) => {
-  if (!odataType) return 'win32ScriptApp'
+  if (!odataType) return null
   const type = odataType.toLowerCase()
-  if (type.includes('wingetapp')) return 'StoreApp'
-  if (type.includes('win32lobapp')) return 'chocolateyApp'
   if (type.includes('officesuiteapp')) return 'officeApp'
   if (type.includes('microsoftedgeapp')) return 'edgeApp'
-  return 'win32ScriptApp'
+  return null
 }
 
 const Page = () => {
@@ -181,7 +180,7 @@ const Page = () => {
         assignmentMode: formData?.assignmentMode || 'append',
       })),
       confirmText: 'Are you sure you want to assign "[displayName]" to all users?',
-      icon: <UserIcon />,
+      icon: <CippIcons.UserIcon />,
       color: 'info',
     },
     {
@@ -196,7 +195,7 @@ const Page = () => {
         assignmentMode: formData?.assignmentMode || 'append',
       })),
       confirmText: 'Are you sure you want to assign "[displayName]" to all devices?',
-      icon: <LaptopMac />,
+      icon: <CippIcons.LaptopMac />,
       color: 'info',
     },
     {
@@ -211,7 +210,7 @@ const Page = () => {
         assignmentMode: formData?.assignmentMode || 'append',
       })),
       confirmText: 'Are you sure you want to assign "[displayName]" to all users and devices?',
-      icon: <GlobeAltIcon />,
+      icon: <CippIcons.GlobeAltIcon />,
       color: 'info',
     },
     {
@@ -219,7 +218,7 @@ const Page = () => {
       type: 'POST',
       url: '/api/ExecAssignApp',
       allowResubmit: true,
-      icon: <UserGroupIcon />,
+      icon: <CippIcons.UserGroupIcon />,
       color: 'info',
       confirmText: 'Select the target groups and intent for "[displayName]".',
       fields: [
@@ -299,7 +298,7 @@ const Page = () => {
       label: 'Save as Template',
       type: 'POST',
       url: '/api/AddAppTemplate',
-      icon: <BookmarkAdd />,
+      icon: <CippIcons.BookmarkAdd />,
       color: 'info',
       fields: [
         {
@@ -314,6 +313,7 @@ const Page = () => {
           label: 'Description',
         },
       ],
+      condition: (row) => mapOdataToAppType(row?.['@odata.type']) !== null,
       customDataformatter: (row, action, formData) => {
         const rows = Array.isArray(row) ? row : [row]
         return {
@@ -340,7 +340,7 @@ const Page = () => {
         ID: 'id',
       },
       confirmText: 'Are you sure you want to delete "[displayName]"?',
-      icon: <TrashIcon />,
+      icon: <CippIcons.Delete />,
       color: 'danger',
     },
   ]
@@ -386,7 +386,7 @@ const Page = () => {
             alignItems: "center"
           }}>
             <CippApplicationDeployDrawer />
-            <Button onClick={vppSyncDialog.handleOpen} startIcon={<Sync />}>
+            <Button onClick={vppSyncDialog.handleOpen} startIcon={<CippIcons.Sync />}>
               Sync VPP
             </Button>
           </Stack>
