@@ -450,7 +450,8 @@
   {
     "name": "AppSecretExpiry",
     "label": "Alert on expiring application secrets",
-    "recommendedRunInterval": "1d"
+    "recommendedRunInterval": "1d",
+    "description": "Reports app registration client secrets expiring within the next 30 days, and keeps reporting them for 7 days after they expire. Secrets that expired more than 7 days ago are not reported."
   },
   {
     "name": "AppleTerms",
