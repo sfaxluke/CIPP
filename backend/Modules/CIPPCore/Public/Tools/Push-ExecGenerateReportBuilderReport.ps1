@@ -166,8 +166,10 @@ function Push-ExecGenerateReportBuilderReport {
                                     (@($HeaderLine, $SeparatorLine) + $DataLines) -join "`n"
                                 }
                             }
-                            $Block | Add-Member -NotePropertyName 'content' -NotePropertyValue $BlockContent -Force
-                            $Block | Add-Member -NotePropertyName 'static' -NotePropertyValue $true -Force
+                            $Block | Add-Member -NotePropertyMembers ([ordered]@{
+                                    content = $BlockContent
+                                    static  = $true
+                                }) -Force
                         } else {
                             $Block | Add-Member -NotePropertyName 'content' -NotePropertyValue 'No data available for this data source.' -Force
                         }

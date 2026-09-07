@@ -59,12 +59,15 @@ function Invoke-ExecCIPPDBCacheAdmin {
                         if ($Record -isnot [System.Management.Automation.PSObject] -and $Record -isnot [PSCustomObject]) {
                             $Record = [PSCustomObject]@{ Value = $Record }
                         }
-                        $Record | Add-Member -MemberType NoteProperty -Name 'CIPPPartitionKey' -Value $Row.PartitionKey -Force
-                        $Record | Add-Member -MemberType NoteProperty -Name 'CIPPRowKey' -Value $Row.RowKey -Force
-                        $Record | Add-Member -MemberType NoteProperty -Name 'CIPPETag' -Value $Row.ETag -Force
-                        if ($IsAllTenants) {
-                            $Record | Add-Member -MemberType NoteProperty -Name 'Tenant' -Value $Row.PartitionKey -Force
+                        $RecordProps = [ordered]@{
+                            CIPPPartitionKey = $Row.PartitionKey
+                            CIPPRowKey       = $Row.RowKey
+                            CIPPETag         = $Row.ETag
                         }
+                        if ($IsAllTenants) {
+                            $RecordProps['Tenant'] = $Row.PartitionKey
+                        }
+                        $Record | Add-Member -NotePropertyMembers $RecordProps -Force
                         $Record
                     }
                 }

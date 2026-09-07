@@ -71,10 +71,12 @@ function Get-CIPPDrift {
         try {
             $JSONData = $RawTemplate.JSON | ConvertFrom-Json -Depth 100 -ErrorAction SilentlyContinue
             $data = $JSONData.RAWJson | ConvertFrom-Json -Depth 100 -ErrorAction SilentlyContinue
-            $data | Add-Member -NotePropertyName 'displayName' -NotePropertyValue $JSONData.Displayname -Force
-            $data | Add-Member -NotePropertyName 'description' -NotePropertyValue $JSONData.Description -Force
-            $data | Add-Member -NotePropertyName 'Type' -NotePropertyValue $JSONData.Type -Force
-            $data | Add-Member -NotePropertyName 'GUID' -NotePropertyValue $RawTemplate.RowKey -Force
+            $data | Add-Member -NotePropertyMembers ([ordered]@{
+                    displayName = $JSONData.Displayname
+                    description = $JSONData.Description
+                    Type        = $JSONData.Type
+                    GUID        = $RawTemplate.RowKey
+                }) -Force
             $IntuneTemplatesByGuid[$RawTemplate.RowKey] = $data
             # Built-in templates are seeded with RowKey = '<guid>.IntuneTemplate.json'; also index
             # by the bare guid so display-name lookups that extract the guid from a standard key hit

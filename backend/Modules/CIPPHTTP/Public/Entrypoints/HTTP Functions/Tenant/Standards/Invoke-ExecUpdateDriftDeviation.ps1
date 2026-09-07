@@ -110,8 +110,10 @@ function Invoke-ExecUpdateDriftDeviation {
                             if (-not $MatchedTemplate) {
                                 Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Could not find IntuneTemplate $TemplateId in drift standard settings for remediation" -Sev 'Warning'
                             } else {
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'remediate' -Value $true -Force
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'report' -Value $true -Force
+                                $MatchedTemplate | Add-Member -NotePropertyMembers ([ordered]@{
+                                        remediate = $true
+                                        report    = $true
+                                    }) -Force
                                 $Settings = $MatchedTemplate
                             }
                         } elseif ($Setting -like '*ConditionalAccessTemplate*') {
@@ -127,8 +129,10 @@ function Invoke-ExecUpdateDriftDeviation {
                             if (-not $MatchedTemplate) {
                                 Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Could not find ConditionalAccessTemplate $TemplateId in drift standard settings for remediation" -Sev 'Warning'
                             } else {
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'remediate' -Value $true -Force
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'report' -Value $true -Force
+                                $MatchedTemplate | Add-Member -NotePropertyMembers ([ordered]@{
+                                        remediate = $true
+                                        report    = $true
+                                    }) -Force
                                 $Settings = $MatchedTemplate
                             }
                         } elseif ($Setting -like '*QuarantineTemplate*') {
@@ -150,8 +154,10 @@ function Invoke-ExecUpdateDriftDeviation {
                             if (-not $MatchedTemplate) {
                                 Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Could not find QuarantineTemplate '$PolicyName' in drift standard settings for remediation" -Sev 'Warning'
                             } else {
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'remediate' -Value $true -Force
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'report' -Value $true -Force
+                                $MatchedTemplate | Add-Member -NotePropertyMembers ([ordered]@{
+                                        remediate = $true
+                                        report    = $true
+                                    }) -Force
                                 $Settings = $MatchedTemplate
                             }
                         } elseif ($Setting -like '*ReusableSettingsTemplate*') {
@@ -161,8 +167,10 @@ function Invoke-ExecUpdateDriftDeviation {
                             if (-not $MatchedTemplate) {
                                 Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Could not find ReusableSettingsTemplate $TemplateId in drift standard settings for remediation" -Sev 'Warning'
                             } else {
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'remediate' -Value $true -Force
-                                $MatchedTemplate | Add-Member -MemberType NoteProperty -Name 'report' -Value $true -Force
+                                $MatchedTemplate | Add-Member -NotePropertyMembers ([ordered]@{
+                                        remediate = $true
+                                        report    = $true
+                                    }) -Force
                                 $Settings = $MatchedTemplate
                             }
                         } else {
@@ -175,8 +183,10 @@ function Invoke-ExecUpdateDriftDeviation {
                                 }
                                 $StandardTemplate.PSObject.Properties.Remove('standards')
                             }
-                            $StandardTemplate | Add-Member -MemberType NoteProperty -Name 'remediate' -Value $true -Force
-                            $StandardTemplate | Add-Member -MemberType NoteProperty -Name 'report' -Value $true -Force
+                            $StandardTemplate | Add-Member -NotePropertyMembers ([ordered]@{
+                                    remediate = $true
+                                    report    = $true
+                                }) -Force
                             $Settings = $StandardTemplate
                         }
                         if ($Settings) {

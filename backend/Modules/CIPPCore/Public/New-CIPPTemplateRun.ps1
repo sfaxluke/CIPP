@@ -18,11 +18,15 @@ function New-CIPPTemplateRun {
     $ExistingTemplates = (Get-CIPPAzDataTableEntity @Table) | ForEach-Object {
         try {
             $data = $_.JSON | ConvertFrom-Json -ErrorAction SilentlyContinue -Depth 100
-            $data | Add-Member -NotePropertyName 'GUID' -NotePropertyValue $_.RowKey -Force -ErrorAction Stop
-            $data | Add-Member -NotePropertyName 'PartitionKey' -NotePropertyValue $_.PartitionKey -Force -ErrorAction Stop
-            $data | Add-Member -NotePropertyName 'SHA' -NotePropertyValue $_.SHA -Force -ErrorAction SilentlyContinue
-            $data | Add-Member -NotePropertyName 'Package' -NotePropertyValue $_.Package -Force -ErrorAction SilentlyContinue
-            $data | Add-Member -NotePropertyName 'Source' -NotePropertyValue $_.Source -Force -ErrorAction SilentlyContinue
+            $data | Add-Member -NotePropertyMembers ([ordered]@{
+                    GUID         = $_.RowKey
+                    PartitionKey = $_.PartitionKey
+                }) -Force -ErrorAction Stop
+            $data | Add-Member -NotePropertyMembers ([ordered]@{
+                    SHA     = $_.SHA
+                    Package = $_.Package
+                    Source  = $_.Source
+                }) -Force -ErrorAction SilentlyContinue
             $data
         } catch {
             return

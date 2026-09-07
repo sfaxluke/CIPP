@@ -222,9 +222,11 @@ function Invoke-ListScheduledItemDetails {
                 $TenantId = $Result.RowKey
                 $TenantInfo = Get-Tenants -TenantFilter $TenantId -ErrorAction SilentlyContinue
                 if ($TenantInfo) {
-                    $Result | Add-Member -NotePropertyName TenantName -NotePropertyValue $TenantInfo.displayName -Force
-                    $Result | Add-Member -NotePropertyName TenantDefaultDomain -NotePropertyValue $TenantInfo.defaultDomainName -Force
-                    $Result | Add-Member -NotePropertyName TenantId -NotePropertyValue $TenantInfo.customerId -Force
+                    $Result | Add-Member -NotePropertyMembers ([ordered]@{
+                            TenantName          = $TenantInfo.displayName
+                            TenantDefaultDomain = $TenantInfo.defaultDomainName
+                            TenantId            = $TenantInfo.customerId
+                        }) -Force
                 }
             }
         } catch {

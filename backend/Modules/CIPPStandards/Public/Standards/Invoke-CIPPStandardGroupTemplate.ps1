@@ -138,8 +138,10 @@ function Invoke-CIPPStandardGroupTemplate {
                         # Only update if the template specifies this should be a dynamic group
                         if ($NormalizedGroupType -eq 'Dynamic' -and $groupobj.membershipRules) {
                             if ($CheckExisting.membershipRule -ne $groupobj.membershipRules) {
-                                $PatchBody | Add-Member -NotePropertyName 'membershipRule' -NotePropertyValue $groupobj.membershipRules
-                                $PatchBody | Add-Member -NotePropertyName 'membershipRuleProcessingState' -NotePropertyValue 'On'
+                                $PatchBody | Add-Member -NotePropertyMembers ([ordered]@{
+                                        membershipRule                = $groupobj.membershipRules
+                                        membershipRuleProcessingState = 'On'
+                                    })
                                 $ChangesNeeded.Add("membershipRule: '$($CheckExisting.membershipRule)' → '$($groupobj.membershipRules)'")
                             }
                         }

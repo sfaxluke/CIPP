@@ -33,10 +33,11 @@ function Get-CIPPGuestUsersReport {
             try {
                 $Guest = $Item.Data | ConvertFrom-Json -Depth 10 -ErrorAction Stop
                 # Per-item timestamp: a page may span tenants.
-                $Guest | Add-Member -NotePropertyName 'CacheTimestamp' -NotePropertyValue $Item.Timestamp -Force
+                $GuestProps = [ordered]@{ CacheTimestamp = $Item.Timestamp }
                 if ($TenantFilter -eq 'AllTenants') {
-                    $Guest | Add-Member -NotePropertyName 'Tenant' -NotePropertyValue $Item.PartitionKey -Force
+                    $GuestProps['Tenant'] = $Item.PartitionKey
                 }
+                $Guest | Add-Member -NotePropertyMembers $GuestProps -Force
                 $Results.Add($Guest)
             } catch {
                 Write-LogMessage -API 'GuestUsersReport' -tenant $Item.PartitionKey -message "Failed to parse guest user item: $($_.Exception.Message)" -sev Warning

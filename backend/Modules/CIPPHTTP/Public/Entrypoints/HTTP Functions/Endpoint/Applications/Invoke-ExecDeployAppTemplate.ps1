@@ -57,15 +57,17 @@ function Invoke-ExecDeployAppTemplate {
                 $AppType = "$($App.appType ?? $App.AppType)"
 
                 $RequestBody = $Config | ConvertTo-Json -Depth 100 | ConvertFrom-Json -Depth 100
-                $RequestBody | Add-Member -NotePropertyName 'selectedTenants' -NotePropertyValue $SelectedTenants -Force
-                $RequestBody | Add-Member -NotePropertyName 'tenantFilter' -NotePropertyValue 'allTenants' -Force
-
+                $RequestProps = [ordered]@{
+                    selectedTenants = $SelectedTenants
+                    tenantFilter    = 'allTenants'
+                }
                 if ($OverrideAssignTo) {
-                    $RequestBody | Add-Member -NotePropertyName 'AssignTo' -NotePropertyValue $OverrideAssignTo -Force
+                    $RequestProps['AssignTo'] = $OverrideAssignTo
                     if ($OverrideAssignTo -eq 'customGroup' -and $OverrideCustomGroup) {
-                        $RequestBody | Add-Member -NotePropertyName 'CustomGroup' -NotePropertyValue $OverrideCustomGroup -Force
+                        $RequestProps['CustomGroup'] = $OverrideCustomGroup
                     }
                 }
+                $RequestBody | Add-Member -NotePropertyMembers $RequestProps -Force
 
                 $MockRequest = [PSCustomObject]@{
                     Body    = $RequestBody

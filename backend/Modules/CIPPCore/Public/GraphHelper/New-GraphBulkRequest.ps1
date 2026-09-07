@@ -113,8 +113,10 @@ function New-GraphBulkRequest {
                             }
                             $PageError = "continuation page returned $PageStatus$(if ($NextResponse.body.error.message) { ": $($NextResponse.body.error.message)" })"
                             Write-Warning "Graph bulk request for '$($NextResponse.id)' ($tenantid): $PageError. The result is incomplete."
-                            $MoreData | Add-Member -NotePropertyName 'PagingIncomplete' -NotePropertyValue $true -Force
-                            $MoreData | Add-Member -NotePropertyName 'PagingError' -NotePropertyValue $PageError -Force
+                            $MoreData | Add-Member -NotePropertyMembers ([ordered]@{
+                                    PagingIncomplete = $true
+                                    PagingError      = $PageError
+                                }) -Force
                             continue
                         }
                         if ($NextResponse.body.value) {
@@ -132,8 +134,10 @@ function New-GraphBulkRequest {
                     }
                     foreach ($Unanswered in ($NextBatchRequests | Where-Object { -not $AnsweredIds.Contains([string]$_.id) })) {
                         Write-Warning "Graph bulk request for '$($Unanswered.id)' ($tenantid): no reply for continuation page '$($Unanswered.url)'. The result is incomplete."
-                        $MoreData | Add-Member -NotePropertyName 'PagingIncomplete' -NotePropertyValue $true -Force
-                        $MoreData | Add-Member -NotePropertyName 'PagingError' -NotePropertyValue 'continuation page missing from the batch reply' -Force
+                        $MoreData | Add-Member -NotePropertyMembers ([ordered]@{
+                                PagingIncomplete = $true
+                                PagingError      = 'continuation page missing from the batch reply'
+                            }) -Force
                     }
                 }
             }
