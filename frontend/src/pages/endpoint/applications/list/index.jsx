@@ -39,14 +39,14 @@ const getAppAssignmentSettingsType = (odataType) => {
   return odataType.replace('#microsoft.graph.', '').replace(/App$/i, '');
 }
 
+// Only Office and Edge rebuild from a stored Graph body; win32LobApp (uploaded .intunewin) and
+// winGetApp (no PackageName) cannot be templated, so they return null.
 const mapOdataToAppType = (odataType) => {
-  if (!odataType) return 'win32ScriptApp'
+  if (!odataType) return null
   const type = odataType.toLowerCase()
-  if (type.includes('wingetapp')) return 'StoreApp'
-  if (type.includes('win32lobapp')) return 'chocolateyApp'
   if (type.includes('officesuiteapp')) return 'officeApp'
   if (type.includes('microsoftedgeapp')) return 'edgeApp'
-  return 'win32ScriptApp'
+  return null
 }
 
 const Page = () => {
@@ -313,6 +313,7 @@ const Page = () => {
           label: 'Description',
         },
       ],
+      condition: (row) => mapOdataToAppType(row?.['@odata.type']) !== null,
       customDataformatter: (row, action, formData) => {
         const rows = Array.isArray(row) ? row : [row]
         return {

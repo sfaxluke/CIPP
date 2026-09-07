@@ -502,8 +502,14 @@ function New-CIPPCAPolicy {
         }
     }
     switch ($ReplacePattern) {
-        'none' {
+        { $_ -in 'none', 'leave' } {
+            # The deploy drawer sends 'leave'; treat it like 'none'.
             Write-Information 'Replacement pattern for inclusions and exclusions is none'
+            # Graph wants ids; a name-based template fails with an opaque 1054, so say why here.
+            $NamedGroups = @(@($JSONobj.conditions.users.includeGroups) + @($JSONobj.conditions.users.excludeGroups) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and -not (Test-IsGuid -String $_) })
+            if ($NamedGroups.Count -gt 0) {
+                throw "Policy '$($JSONobj.displayName)' references groups by name ($($NamedGroups -join ', ')). Deploy it with 'Replace by display name' so the names are resolved to group ids, or store object ids in the template."
+            }
             break
         }
         'AllUsers' {

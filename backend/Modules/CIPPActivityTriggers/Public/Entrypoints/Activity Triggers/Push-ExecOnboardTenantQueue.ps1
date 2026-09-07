@@ -556,14 +556,10 @@ function Push-ExecOnboardTenantQueue {
                         }
                         $NewExcludedTenants.Add($GroupExclusionObj)
                         $object.excludedTenants = $NewExcludedTenants
-                        $JSON = ConvertTo-Json -InputObject $object -Compress -Depth 10
+                        # Depth 100 like every other writer; write back the row read so its other columns survive.
+                        $AllTenantsTemplate.JSON = ConvertTo-Json -InputObject $object -Compress -Depth 100
                         $TemplatesTable.Force = $true
-                        Add-CIPPAzDataTableEntity @TemplatesTable -Entity @{
-                            JSON         = "$JSON"
-                            RowKey       = $AllTenantsTemplate.RowKey
-                            GUID         = $AllTenantsTemplate.GUID
-                            PartitionKey = 'StandardsTemplateV2'
-                        }
+                        Add-CIPPAzDataTableEntity @TemplatesTable -Entity $AllTenantsTemplate
                     }
                 }
 

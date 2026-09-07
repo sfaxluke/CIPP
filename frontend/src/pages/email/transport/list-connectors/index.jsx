@@ -14,6 +14,8 @@ const Page = () => {
       url: "/api/AddExConnectorTemplate",
       icon: <CippIcons.Book />,
       postEntireRow: true,
+      // The bulk menu nests each row under a numeric key, which loses the row's properties.
+      hideBulk: true,
       confirmText: "Are you sure you want to create a template based on this connector?",
       color: "info",
     },

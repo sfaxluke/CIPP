@@ -35,10 +35,11 @@ function Get-CIPPMailboxesReport {
             foreach ($Item in $Page.Items) {
                 $Mailbox = $Item.Data | ConvertFrom-Json
                 # Per-item timestamp: a page may span tenants.
-                $Mailbox | Add-Member -NotePropertyName 'CacheTimestamp' -NotePropertyValue $Item.Timestamp -Force
+                $MailboxProps = [ordered]@{ CacheTimestamp = $Item.Timestamp }
                 if ($TenantFilter -eq 'AllTenants') {
-                    $Mailbox | Add-Member -NotePropertyName 'Tenant' -NotePropertyValue $Item.PartitionKey -Force
+                    $MailboxProps['Tenant'] = $Item.PartitionKey
                 }
+                $Mailbox | Add-Member -NotePropertyMembers $MailboxProps -Force
                 $Results.Add($Mailbox)
             }
             return [PSCustomObject]@{

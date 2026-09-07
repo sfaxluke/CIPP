@@ -25,6 +25,11 @@ function New-CIPPIntuneAppDeployment {
     $ExcludeGroup = $AppConfig.excludeGroup
     $AppType = if ($AppConfig.type) { $AppConfig.type } else { 'Choco' }
 
+    # Older templates may hold a Graph-read body (has an id); only Office/Edge can deploy from one.
+    if ($IntuneBody.id -and $AppType -notin @('OfficeApp', 'EdgeApp')) {
+        throw "'$($AppConfig.Applicationname)' was templated from an existing Intune application with uploaded installer content. CIPP cannot deploy uploaded installer content; only script or package based applications can be templated. Rebuild this template entry as a Store, Chocolatey, Office, Edge, MSP or Custom Application."
+    }
+
     # Build IntuneBody from raw config if not pre-built (template/standard path)
     if (-not $IntuneBody -and $AppType -eq 'WinGet') {
         $PackageId = $AppConfig.packagename ?? $AppConfig.PackageName

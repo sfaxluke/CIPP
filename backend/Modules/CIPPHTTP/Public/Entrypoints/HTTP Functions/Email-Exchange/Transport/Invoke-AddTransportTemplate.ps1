@@ -15,6 +15,10 @@ Function Invoke-AddTransportTemplate {
 
     try {
         $GUID = (New-Guid).GUID
+        # Posted from the row action; without a name the template lists blank and deploys with no parameters.
+        if (-not $Request.Body.PowerShellCommand -and [string]::IsNullOrWhiteSpace($Request.Body.Name)) {
+            throw 'Transport rule template name is required but was not provided'
+        }
         $JSON = if ($request.body.PowerShellCommand) {
             Write-Host 'PowerShellCommand'
             $request.body.PowerShellCommand | ConvertFrom-Json

@@ -3433,7 +3433,7 @@
           "Email-Exchange > Transport"
         ],
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -3443,9 +3443,13 @@
                     "type": "string"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Posted from the row action; without a name the template lists blank."
                   }
                 },
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": true,
                 "x-cipp-passthrough": true,
                 "description": "This endpoint forwards the request body onward rather than reading a fixed set of fields. The properties listed here are the ones it is known to read; others may be accepted."
@@ -5601,6 +5605,7 @@
         "tags": [
           "Tenant > Administration > Alerts"
         ],
+        "description": "Creates or updates a scripted CIPP alert, stored as a hidden scheduled task.\n\nA selection of two or more tenants or groups is stored verbatim and expanded on every run,\nso tenant group membership is always current.",
         "requestBody": {
           "required": true,
           "content": {
@@ -5609,16 +5614,15 @@
                 "type": "object",
                 "properties": {
                   "excludedTenants": {
-                    "type": "string"
-                  },
-                  "RowKey": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Tenants or tenant groups to skip even when they fall within the selection above. Optional."
                   },
                   "tenantFilter": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "description": "The tenants, tenant groups or *All Tenants the alert applies to. At least one is required."
                   }
                 },
                 "required": [
@@ -7061,11 +7065,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": {
-                    "type": "string"
+                  "Name": {
+                    "type": "string",
+                    "description": "Posted from the row action; without a name the template lists blank and deploys with no parameters."
                   },
                   "PowerShellCommand": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Posted from the row action; without a name the template lists blank and deploys with no parameters."
                   }
                 },
                 "additionalProperties": true,
@@ -37094,6 +37100,7 @@
                         },
                         "status": {
                           "type": "string",
+                          "description": "The status is written at the end of this block, after the action it implies succeeds.",
                           "x-cipp-observed-values": [
                             "deniedDelete",
                             "DeniedRemediate"
@@ -41313,7 +41320,7 @@
                       "label": {
                         "x-cipp-field-source": "backend"
                       },
-                      "package": {
+                      "Package": {
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "PartitionKey": {
@@ -41329,7 +41336,7 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
+                      "Source": {
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "templateCount": {
@@ -46081,7 +46088,7 @@
                         "x-cipp-field-source": "storage"
                       },
                       "ExecutedTime": {
-                        "x-cipp-field-source": "frontend"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "Hidden": {
                         "type": "boolean",
@@ -49379,7 +49386,7 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
+                      "Source": {
                         "x-cipp-field-source": "storage,backend,frontend"
                       },
                       "templateCount": {
@@ -54870,6 +54877,9 @@
                         "type": "string",
                         "x-cipp-field-source": "storage"
                       },
+                      "ExecutedTime": {
+                        "x-cipp-field-source": "storage"
+                      },
                       "Hidden": {
                         "type": "boolean",
                         "x-cipp-field-source": "storage"
@@ -58640,7 +58650,7 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
+                      "Source": {
                         "x-cipp-field-source": "storage"
                       },
                       "standards": {

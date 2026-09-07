@@ -525,7 +525,8 @@ const ManageDriftPage = () => {
   }
 
   // Helper function to create deviation items
-  const createDeviationItems = (deviations, statusOverride = null) => {
+  // preferRowStatus keeps the statusOverride id prefix but shows the row's own status.
+  const createDeviationItems = (deviations, statusOverride = null, preferRowStatus = false) => {
     return (deviations || [])
       .filter((deviation) => {
         // Filter out template deviations where the template cannot be found
@@ -576,11 +577,14 @@ const ManageDriftPage = () => {
         // If actually compliant (values match), mark as aligned regardless of input status
         // If license is skipped, mark as skipped
         // Otherwise use the provided status
+        const resolvedStatus = preferRowStatus
+          ? deviation.Status || statusOverride
+          : statusOverride || deviation.Status || deviation.state
         const actualStatus = isActuallyCompliant
           ? 'aligned'
           : isLicenseSkipped
             ? 'skipped'
-            : statusOverride || deviation.Status || deviation.state
+            : resolvedStatus
         const actualStatusText = isActuallyCompliant
           ? 'Compliant'
           : isLicenseSkipped
@@ -1155,7 +1159,8 @@ const ManageDriftPage = () => {
   )
   const deniedDeviationItems = createDeviationItems(
     processedDriftData.deniedDeviationsList,
-    'denied'
+    'denied',
+    true
   )
   const alignedStandardItems = createDeviationItems(processedDriftData.alignedStandards, 'aligned')
   const licenseMissingDeviationItems = createDeviationItems(
@@ -2393,15 +2398,6 @@ const ManageDriftPage = () => {
           open={Boolean(anchorEl[`denied-${item.id}`])}
           onClose={() => handleMenuClose(`denied-${item.id}`)}
         >
-          <MenuItem
-            onClick={() => {
-              handleDeviationAction('deny', item)
-              handleMenuClose(`denied-${item.id}`)
-            }}
-          >
-            <CippIcons.Error sx={{ mr: 1, color: 'error.main' }} />
-            Rerun standard to align with template
-          </MenuItem>
           {supportsRemediateAction(item) && (
             <MenuItem
               onClick={() => {
@@ -2441,15 +2437,6 @@ const ManageDriftPage = () => {
           open={Boolean(anchorEl[`aligned-${item.id}`])}
           onClose={() => handleMenuClose(`aligned-${item.id}`)}
         >
-          <MenuItem
-            onClick={() => {
-              handleDeviationAction('deny', item)
-              handleMenuClose(`aligned-${item.id}`)
-            }}
-          >
-            <CippIcons.Error sx={{ mr: 1, color: 'error.main' }} />
-            Rerun standard to align with template
-          </MenuItem>
           {supportsRemediateAction(item) && (
             <MenuItem
               onClick={() => {

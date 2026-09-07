@@ -189,7 +189,8 @@
         ]
       }
     ],
-    "recommendedRunInterval": "1d"
+    "recommendedRunInterval": "1d",
+    "description": "Alerts when a mailbox exceeds a percentage of its send/receive quota, using the Microsoft mailbox usage report. The report's storage figure already excludes the Recoverable Items dumpster and the archive, so it reflects what actually counts against the quota. Deleted mailboxes are skipped."
   },
   {
     "name": "ArchiveQuota",
@@ -450,7 +451,8 @@
   {
     "name": "AppSecretExpiry",
     "label": "Alert on expiring application secrets",
-    "recommendedRunInterval": "1d"
+    "recommendedRunInterval": "1d",
+    "description": "Reports app registration client secrets expiring within the next 30 days, and keeps reporting them for 7 days after they expire. Secrets that expired more than 7 days ago are not reported."
   },
   {
     "name": "AppleTerms",

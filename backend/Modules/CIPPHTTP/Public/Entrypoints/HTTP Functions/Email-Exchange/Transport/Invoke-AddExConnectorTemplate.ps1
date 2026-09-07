@@ -16,6 +16,10 @@ Function Invoke-AddExConnectorTemplate {
 
     try {
         $GUID = (New-Guid).GUID
+        # Posted from the row action; without a name the template lists blank.
+        if ([string]::IsNullOrWhiteSpace($Request.Body.name)) {
+            throw 'Connector template name is required but was not provided'
+        }
         $Select = if ($Request.Body.cippconnectortype -eq 'outbound') {
             @(
                 'name', 'AllAcceptedDomains', 'CloudServicesMailEnabled', 'Comment', 'Confirm', 'ConnectorSource', 'ConnectorType', 'Enabled', 'IsTransportRuleScoped', 'RecipientDomains', 'RouteAllMessagesViaOnPremises', 'SmartHosts', 'TestMode', 'TlsDomain', 'TlsSettings', 'UseMXRecord'

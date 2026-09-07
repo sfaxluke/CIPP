@@ -66,8 +66,10 @@ function Invoke-ListMFAUsers {
                     UPN = 'Loading data for all tenants. Please check back in a few minutes'
                 }
                 $Batch = $TenantList | ForEach-Object {
-                    $_ | Add-Member -NotePropertyName FunctionName -NotePropertyValue 'ListMFAUsersQueue'
-                    $_ | Add-Member -NotePropertyName QueueId -NotePropertyValue $Queue.RowKey
+                    $_ | Add-Member -NotePropertyMembers ([ordered]@{
+                            FunctionName = 'ListMFAUsersQueue'
+                            QueueId      = $Queue.RowKey
+                        })
                     $_
                 }
                 if (($Batch | Measure-Object).Count -gt 0) {

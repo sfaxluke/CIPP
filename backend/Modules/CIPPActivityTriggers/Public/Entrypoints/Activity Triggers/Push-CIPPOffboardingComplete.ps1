@@ -136,7 +136,8 @@ function Push-CIPPOffboardingComplete {
                     foreach ($Group in ($PostExecutionResults | Group-Object -Property Channel)) {
                         $Title = "Notify via $($Group.Name)"
                         $Message = @($Group.Group | ForEach-Object { [string]$_.Result }) -join "`n"
-                        $NotifyStatus = if (@($Group.Group | Where-Object { [string]$_.Result -match '^(Error|Could not|Failed)' }).Count -gt 0) { 'failed' } else { 'succeeded' }
+                        # Skipped = asked for and not delivered, so it fails the step.
+                        $NotifyStatus = if (@($Group.Group | Where-Object { [string]$_.Result -match '^(Error|Could not|Failed|Skipped)' }).Count -gt 0) { 'failed' } else { 'succeeded' }
                         if ($NotifyIndexes.ContainsKey($Title)) {
                             $Covered[$Title] = $true
                             Set-CIPPAsyncDeploymentStep -JobId $DeploymentId -Name $Username -StepIndex $NotifyIndexes[$Title] -StepStatus $NotifyStatus -Message $Message

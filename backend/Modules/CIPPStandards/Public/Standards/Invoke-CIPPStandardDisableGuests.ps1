@@ -65,14 +65,18 @@ function Invoke-CIPPStandardDisableGuests {
             $LastSignIn = Get-CIPPLastSignInDateTime -SignInActivity $guest.signInActivity
             if ($LastSignIn) {
                 if ($LastSignIn -le $Days) {
-                    $guest | Add-Member -NotePropertyName 'LastSignInDateTime' -NotePropertyValue $LastSignIn -Force
-                    $guest | Add-Member -NotePropertyName 'NeverSignedIn' -NotePropertyValue $false -Force
+                    $guest | Add-Member -NotePropertyMembers ([ordered]@{
+                            LastSignInDateTime = $LastSignIn
+                            NeverSignedIn      = $false
+                        }) -Force
                     $guest
                 }
             } elseif ($IncludeNeverSignedIn) {
                 # No sign-in attempt on record; createdDateTime is already <= $Days due to the server-side filter
-                $guest | Add-Member -NotePropertyName 'LastSignInDateTime' -NotePropertyValue $null -Force
-                $guest | Add-Member -NotePropertyName 'NeverSignedIn' -NotePropertyValue $true -Force
+                $guest | Add-Member -NotePropertyMembers ([ordered]@{
+                        LastSignInDateTime = $null
+                        NeverSignedIn      = $true
+                    }) -Force
                 $guest
             }
         }

@@ -25,6 +25,8 @@ const Page = () => {
       type: "POST",
       url: "/api/AddTransportTemplate",
       postEntireRow: true,
+      // The bulk menu nests each row under a numeric key, which loses the row's properties.
+      hideBulk: true,
       confirmText: "Are you sure you want to create a template based on this rule?",
       icon: <CippIcons.Book />,
     },

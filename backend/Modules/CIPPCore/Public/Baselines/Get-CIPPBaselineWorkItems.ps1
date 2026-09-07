@@ -306,8 +306,10 @@ function Get-CIPPBaselineWorkItems {
             $ConflictItem.Tiers = @($ConflictTiers)
             # Attribute the row to every colliding baseline, not just its own source.
             $ConflictItem.SourceTemplate = ($ConflictNames -join ', ')
-            $ConflictItem | Add-Member -NotePropertyName Conflicted -NotePropertyValue $true -Force
-            $ConflictItem | Add-Member -NotePropertyName ConflictWith -NotePropertyValue $ConflictNames -Force
+            $ConflictItem | Add-Member -NotePropertyMembers ([ordered]@{
+                    Conflicted   = $true
+                    ConflictWith = $ConflictNames
+                }) -Force
             $ResolvedItems.Add($ConflictItem)
         }
     }
@@ -415,8 +417,10 @@ function Get-CIPPBaselineWorkItems {
             $Member = $Claimants[$Index]
             $Member.RemediateEnabled = $false
             $Member.AlertEnabled = $GroupAlert
-            $Member | Add-Member -NotePropertyName Conflicted -NotePropertyValue $true -Force
-            $Member | Add-Member -NotePropertyName ConflictWith -NotePropertyValue @($Opponents[$Index] | Select-Object -Unique) -Force
+            $Member | Add-Member -NotePropertyMembers ([ordered]@{
+                    Conflicted   = $true
+                    ConflictWith = @($Opponents[$Index] | Select-Object -Unique)
+                }) -Force
         }
     }
 

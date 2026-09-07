@@ -346,7 +346,9 @@ function Send-CIPPAlert {
     if ($Type -eq 'psa') {
         Write-Information 'Trying to send to PSA'
         if (-not $config.sendtoIntegration) {
+            # The extension test button bypasses this gate, so log the skip where the operator looks.
             Write-Information 'PSA delivery skipped: sendtoIntegration is disabled in CippNotifications config. Enable it under Settings -> Notifications to route alerts to your PSA.'
+            Write-LogMessage -API 'Webhook Alerts' -tenant $TenantFilter -message "PSA delivery skipped for '$Title': 'Send to integration' is off under Settings > Notifications, so no PSA ticket was raised." -sev Warning
             return 'Skipped: PSA delivery is disabled in the notification settings'
         }
         if ($PSCmdlet.ShouldProcess('PSA', 'Sending alert')) {
@@ -379,13 +381,17 @@ function Send-CIPPAlert {
                     $Alert.PsaTicketPriority = $PsaTicketPriority
                     Write-Information "PSA alert priority override: $PsaTicketPriority"
                 }
-                $PsaResult = New-CippExtAlert -Alert $Alert
-                if ($PsaResult) {
-                    Write-Information "PSA result: $PsaResult"
+                # Extensions report failure in their return value, one line per extension.
+                $PsaOutput = @(New-CippExtAlert -Alert $Alert)
+                $PsaResult = ($PsaOutput -join ' ').Trim()
+                $Failure = (@($PsaOutput | Where-Object { "$_" -match '^(Failed|Error)' }) -join ' ').Trim()
+                if ($Failure) {
+                    Write-LogMessage -API 'Webhook Alerts' -tenant $TenantFilter -message "PSA delivery failed for '$Title': $Failure" -sev Error
+                    return "Error: $Failure"
                 }
                 Write-LogMessage -API 'Webhook Alerts' -tenant $TenantFilter -message "Sent PSA alert $title" -sev info
-                # Same shape as the email and webhook branches, so a caller can record the outcome
-                return "Sent PSA alert: $title"
+                # Same shape as the email and webhook branches; the text carries the ticket id.
+                return "Sent PSA alert: $title$(if ($PsaResult) { " - $PsaResult" })"
             } catch {
                 $ErrorMessage = Get-CippException -Exception $_
                 Write-Information "Could not send alerts to ticketing system: $($ErrorMessage.NormalizedError)"

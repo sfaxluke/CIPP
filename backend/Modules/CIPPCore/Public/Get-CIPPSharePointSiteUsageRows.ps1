@@ -125,8 +125,10 @@ function Get-CIPPSharePointSiteUsageRows {
         if ($IncludeArchive -and -not [string]::IsNullOrWhiteSpace($ListingItem.webUrl)) {
             $ArchiveFields = $null
             if ($ArchiveByUrl.TryGetValue($ListingItem.webUrl.TrimEnd('/').ToLowerInvariant(), [ref]$ArchiveFields)) {
-                $ListingItem | Add-Member -NotePropertyName 'archivedFileDiskUsedBytes' -NotePropertyValue $ArchiveFields.archivedFileDiskUsedBytes -Force
-                $ListingItem | Add-Member -NotePropertyName 'allowFileArchive' -NotePropertyValue $ArchiveFields.allowFileArchive -Force
+                $ListingItem | Add-Member -NotePropertyMembers ([ordered]@{
+                        archivedFileDiskUsedBytes = $ArchiveFields.archivedFileDiskUsedBytes
+                        allowFileArchive          = $ArchiveFields.allowFileArchive
+                    }) -Force
             }
         }
 

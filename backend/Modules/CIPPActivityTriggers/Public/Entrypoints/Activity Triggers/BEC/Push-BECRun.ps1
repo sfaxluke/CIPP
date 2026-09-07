@@ -536,15 +536,19 @@
 
         foreach ($Row in (@($RuleChangesLog) + @($SafelistChanges) + @($SharingChanges))) {
             $Geo = & $GetGeo $Row.ClientIP
-            $Row | Add-Member -NotePropertyName 'Country' -NotePropertyValue $Geo.CountryOrRegion -Force
-            $Row | Add-Member -NotePropertyName 'City' -NotePropertyValue $Geo.City -Force
-            $Row | Add-Member -NotePropertyName 'ForeignLocation' -NotePropertyValue (& $TestForeign $Geo.CountryOrRegion) -Force
+            $Row | Add-Member -NotePropertyMembers ([ordered]@{
+                    Country         = $Geo.CountryOrRegion
+                    City            = $Geo.City
+                    ForeignLocation = (& $TestForeign $Geo.CountryOrRegion)
+                }) -Force
         }
         foreach ($Row in @($SentMessages)) {
             $Geo = & $GetGeo $Row.FromIP
-            $Row | Add-Member -NotePropertyName 'Country' -NotePropertyValue $Geo.CountryOrRegion -Force
-            $Row | Add-Member -NotePropertyName 'City' -NotePropertyValue $Geo.City -Force
-            $Row | Add-Member -NotePropertyName 'ForeignLocation' -NotePropertyValue (& $TestForeign $Geo.CountryOrRegion) -Force
+            $Row | Add-Member -NotePropertyMembers ([ordered]@{
+                    Country         = $Geo.CountryOrRegion
+                    City            = $Geo.City
+                    ForeignLocation = (& $TestForeign $Geo.CountryOrRegion)
+                }) -Force
         }
         foreach ($Row in @($SuspectUserSignIns)) {
             $Row | Add-Member -NotePropertyName 'ForeignLocation' -NotePropertyValue (& $TestForeign $Row.Country) -Force
