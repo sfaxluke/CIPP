@@ -3,10 +3,7 @@ import { CippIcons } from './icon-registry'
 import NextLink from 'next/link'
 import { alpha } from '@mui/material/styles'
 import { Box } from '@mui/system'
-import {
-  formatCellText,
-  CippCellText,
-} from '../components/CippTable/CippCellText'
+import { formatCellText } from '../components/CippTable/CippCellText'
 import { CippCopyToClipBoard } from '../components/CippComponents/CippCopyToClipboard'
 import { getCippLicenseTranslation } from './get-cipp-license-translation'
 import CippDataTableButton from '../components/CippTable/CippDataTableButton'
@@ -398,40 +395,6 @@ export const getCippFormatting = (
     ) : (
       <CippCopyToClipBoard text={data} type="password" />
     )
-  }
-
-  // Handle hardware hash fields
-  const hardwareHashFields = ['hardwareHash', 'Hardware Hash']
-  if (
-    typeof data === 'string' &&
-    (hardwareHashFields.includes(cellName) ||
-      cellNameLower.includes('hardware'))
-  ) {
-    if (data.length > 15) {
-      return isText ? (
-        data
-      ) : (
-        <Tooltip title={data} placement="top" arrow>
-          <CippCellText>{data.substring(0, 15)}...</CippCellText>
-        </Tooltip>
-      )
-    }
-    return formatCellText(data, isText)
-  }
-
-  // Handle log message field
-  const messageFields = ['Message']
-  if (messageFields.includes(cellName)) {
-    if (typeof data === 'string' && data.length > 120) {
-      return isText ? (
-        data
-      ) : (
-        <Tooltip title={data} placement="top" arrow>
-          <CippCellText>{data.substring(0, 120)}...</CippCellText>
-        </Tooltip>
-      )
-    }
-    return formatCellText(data, isText)
   }
 
   if (

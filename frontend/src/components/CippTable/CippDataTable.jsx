@@ -497,9 +497,17 @@ const MUI_TABLE_BODY_CELL_PROPS = {
   onCopy: MUI_TABLE_BODY_CELL_ON_COPY,
   sx: {
     cursor: 'inherit',
+    // grid-no-grow: allow plain text to shrink so CSS ellipsis can clip to column width
+    overflow: 'hidden',
+    minWidth: 0,
     '& .cipp-cell-text': {
       cursor: 'text',
       userSelect: 'text',
+      display: 'block',
+      maxWidth: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     },
     '& .MuiSvgIcon-root': {
       cursor: 'inherit',
