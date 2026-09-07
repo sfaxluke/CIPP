@@ -878,8 +878,13 @@ const Page = () => {
   const pageSetupValues = useWatch({ control: pageSetupForm.control })
   const hasDatabaseBlocks = blocks.some((b) => b.type === 'database')
   const scheduleForm = useForm({
-    defaultValues: { scheduleName: '', recurrence: null, postExecution: [] },
+    defaultValues: { scheduleName: '', recurrence: null, postExecution: [], followTemplate: true },
   })
+  const followTemplate = useWatch({ control: scheduleForm.control, name: 'followTemplate' })
+  // A schedule created from a saved template can reference it by GUID so every run picks up the
+  // template as it exists at that moment, instead of a frozen copy of the blocks taken when the
+  // schedule was created. Unsaved builders have nothing to reference, so they still snapshot.
+  const linkScheduleToTemplate = !!templateGUID && followTemplate !== false
 
   const watchBlockType = useWatch({ control: addBlockForm.control, name: 'blockType' })
   const watchTestSuite = useWatch({ control: addBlockForm.control, name: 'testSuite' })
@@ -1327,6 +1332,19 @@ const Page = () => {
   const handleScheduleReport = () => {
     const values = scheduleForm.getValues()
     const name = saveForm.getValues('templateName') || 'Custom Report'
+    const parameters = {
+      TemplateName: name,
+      TenantFilter: currentTenant,
+      IncludeRawAttachments:
+        settingsForm.getValues('includeRawAttachments') && hasDatabaseBlocks ? 'true' : 'false',
+    }
+    if (linkScheduleToTemplate) {
+      // No Blocks/Settings: the executor loads both from the template at run time.
+      parameters.TemplateGUID = templateGUID
+    } else {
+      parameters.Blocks = JSON.stringify(blocks.map(serialiseBlock))
+      parameters.Settings = JSON.stringify(reportSettings)
+    }
     scheduleCall.mutate({
       url: '/api/AddScheduledItem',
       data: {
@@ -1336,14 +1354,7 @@ const Page = () => {
           label: 'Generate Report Builder PDF',
           value: 'Push-ExecGenerateReportBuilderReport',
         },
-        parameters: {
-          TemplateName: name,
-          TenantFilter: currentTenant,
-          IncludeRawAttachments:
-            settingsForm.getValues('includeRawAttachments') && hasDatabaseBlocks ? 'true' : 'false',
-          Blocks: JSON.stringify(blocks.map(serialiseBlock)),
-          Settings: JSON.stringify(reportSettings),
-        },
+        parameters,
         ScheduledTime: Math.floor(Date.now() / 1000),
         Recurrence: values.recurrence || { value: '0', label: 'Once' },
         postExecution: values.postExecution || [],
@@ -1906,10 +1917,30 @@ const Page = () => {
               ]}
               multiple={true}
             />
+            {templateGUID && (
+              <CippFormComponent
+                type="switch"
+                name="followTemplate"
+                label="Always use the latest saved version of this template"
+                formControl={scheduleForm}
+              />
+            )}
             {currentTenant && (
               <Alert severity="info">
-                Report will be generated for <strong>{currentTenant}</strong> using the current
-                block configuration.
+                {linkScheduleToTemplate ? (
+                  <>
+                    Report will be generated for <strong>{currentTenant}</strong> from the saved
+                    template <strong>{saveForm.getValues('templateName')}</strong>. Each run uses
+                    the template as it exists at that time, so later edits to the template apply
+                    automatically. Changes not yet saved to the template are not included.
+                  </>
+                ) : (
+                  <>
+                    Report will be generated for <strong>{currentTenant}</strong> using a copy of
+                    the current block configuration. Later changes to the template will not affect
+                    this schedule.
+                  </>
+                )}
               </Alert>
             )}
             <CippApiResults apiObject={scheduleCall} />
