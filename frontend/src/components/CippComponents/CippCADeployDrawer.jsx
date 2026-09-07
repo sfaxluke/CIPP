@@ -20,7 +20,8 @@ export const CippCADeployDrawer = ({
   onClose = null, // External close handler
 }) => {
   const [internalDrawerVisible, setInternalDrawerVisible] = useState(false)
-  const formControl = useForm()
+  // Replace by display name is the only option that deploys a name-based template.
+  const formControl = useForm({ defaultValues: { replacename: 'displayName' } })
   const tenantFilter = useSettings()?.tenantFilter
   const CATemplates = ApiGetCall({ url: '/api/ListCATemplates', queryKey: 'CATemplates' })
   const [JSONData, setJSONData] = useState()
