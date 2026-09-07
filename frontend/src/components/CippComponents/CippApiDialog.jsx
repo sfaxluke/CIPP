@@ -315,20 +315,23 @@ export const CippApiDialog = (props) => {
       !linkOpenedRef.current
     ) {
       linkOpenedRef.current = true
-      const isInternalLink = api.link.startsWith('/') && !api?.external
-      const linkWithData = api.link.replace(/\[([^\]]+)\]/g, (_, key) => {
-        const value = getRawNestedValue(row, key)
-        if (value === undefined || value === null || value === '') return `[${key}]`
+      const placeholder = /\[([^\]]+)\]/g
+      const hasValue = (value) => value !== undefined && value !== null && value !== ''
+      if (api.link.startsWith('/') && !api?.external) {
         // Internal routes only ever substitute ids and query values, so encode them: the row
         // is tenant data and must not be able to inject path segments or a second origin.
-        // External links may substitute a whole URL (e.g. [webUrl]) and are left as-is.
-        return isInternalLink ? encodeURIComponent(String(value)) : value
-      })
-      // A protocol-relative result (//evil.example) would leave the app; keep it in-app only.
-      if (isInternalLink && !linkWithData.startsWith('//')) {
-        router.push(linkWithData, undefined, { shallow: true })
+        const internalLink = api.link.replace(placeholder, (_, key) => {
+          const value = getRawNestedValue(row, key)
+          return hasValue(value) ? encodeURIComponent(String(value)) : `[${key}]`
+        })
+        router.push(internalLink, undefined, { shallow: true })
       } else {
-        window.open(linkWithData, api.target || '_blank')
+        // External links may substitute a whole URL (e.g. [webUrl]) and are left as-is.
+        const externalLink = api.link.replace(placeholder, (_, key) => {
+          const value = getRawNestedValue(row, key)
+          return hasValue(value) ? value : `[${key}]`
+        })
+        window.open(externalLink, api.target || '_blank')
       }
       createDialog.handleClose()
     }
