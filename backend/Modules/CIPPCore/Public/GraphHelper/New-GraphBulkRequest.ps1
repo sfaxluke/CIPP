@@ -144,18 +144,25 @@ function New-GraphBulkRequest {
 
         } catch {
             Write-Host 'updating graph table because something failed.'
+            $ErrorRecord = $_ # $_ is the parse error inside the nested catch
             # Try to parse ErrorDetails.Message as JSON
-            if ($_.ErrorDetails.Message) {
+            $ErrorBody = [string]$ErrorRecord.ErrorDetails.Message
+            if ($ErrorBody) {
                 try {
-                    $ErrorJson = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction Stop
+                    $ErrorJson = $ErrorBody | ConvertFrom-Json -ErrorAction Stop
                     $Message = $ErrorJson.error.message
                 } catch {
-                    $Message = $_.ErrorDetails.Message
+                    $Message = $ErrorBody
                 }
             }
 
             if ([string]::IsNullOrEmpty($Message)) {
-                $Message = $_.Exception.Message
+                $Message = $ErrorRecord.Exception.Message
+            }
+
+            # An IIS error page ('Request Too Long') is HTML, not a Graph error; keep its text only.
+            if ($Message -match '(?i)<html') {
+                $Message = ($Message -replace '(?s)<[^>]+>', ' ' -replace '\s+', ' ').Trim()
             }
 
             if ($Message -ne 'Request not applicable to target tenant.') {
