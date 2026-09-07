@@ -189,7 +189,8 @@
         ]
       }
     ],
-    "recommendedRunInterval": "1d"
+    "recommendedRunInterval": "1d",
+    "description": "Alerts when a mailbox exceeds a percentage of its send/receive quota, using the Microsoft mailbox usage report. The report's storage figure already excludes the Recoverable Items dumpster and the archive, so it reflects what actually counts against the quota. Deleted mailboxes are skipped."
   },
   {
     "name": "ArchiveQuota",
