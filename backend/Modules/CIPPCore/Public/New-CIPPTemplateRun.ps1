@@ -141,10 +141,12 @@ function New-CIPPTemplateRun {
 
                             if ($ExistingPolicy -and $ExistingPolicy.PartitionKey -eq 'CATemplate') {
                                 "CA Policy $($policy.displayName) found, updating template"
+                                # Full replace: carry Package across like the Intune branches do.
                                 Add-CIPPAzDataTableEntity @Table -Entity @{
                                     JSON         = "$Template"
                                     RowKey       = $ExistingPolicy.GUID
                                     PartitionKey = 'CATemplate'
+                                    Package      = $ExistingPolicy.Package
                                     GUID         = $ExistingPolicy.GUID
                                     SHA          = $Hash
                                     Source       = $ExistingPolicy.Source
