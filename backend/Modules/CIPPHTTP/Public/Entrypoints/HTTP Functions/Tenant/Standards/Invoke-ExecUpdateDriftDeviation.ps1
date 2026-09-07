@@ -85,12 +85,7 @@ function Invoke-ExecUpdateDriftDeviation {
                 try {
                     $user = $request.headers.'x-ms-client-principal'
                     $username = ([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($user)) | ConvertFrom-Json).userDetails
-                    $Result = Set-CIPPDriftDeviation -TenantFilter $TenantFilter -StandardName $Deviation.standardName -Status $Deviation.status -Reason $Reason -user $username
-                    [PSCustomObject]@{
-                        success = $true
-                        result  = $Result
-                    }
-                    Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Updated drift deviation status for $($Deviation.standardName) to $($Deviation.status) with reason: $Reason" -Sev 'Info'
+                    # The status is written at the end of this block, after the action it implies succeeds.
                     if ($Deviation.status -eq 'DeniedRemediate') {
                         $Setting = $Deviation.standardName -replace 'standards\.', ''
                         $StandardTemplate = Get-CIPPTenantAlignment -TenantFilter $TenantFilter | Where-Object -Property standardType -EQ 'drift'
@@ -245,6 +240,7 @@ function Invoke-ExecUpdateDriftDeviation {
                                 success      = $false
                                 error        = "The deviation status was updated, but no remediation task was scheduled: '$Setting' could not be resolved from the drift template settings. Verify the template still exists in the template library and is included in the drift template, or re-save the drift template."
                             }
+                            Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Could not find standard $Setting in drift standard settings for remediation" -Sev 'Warning'
                         }
                     }
                     if ($Deviation.status -eq 'deniedDelete') {
@@ -306,6 +302,14 @@ function Invoke-ExecUpdateDriftDeviation {
 
 
                     }
+
+                    # Task queued / policy gone; a throw above leaves the row untouched.
+                    $Result = Set-CIPPDriftDeviation -TenantFilter $TenantFilter -StandardName $Deviation.standardName -Status $Deviation.status -Reason $Reason -user $username
+                    [PSCustomObject]@{
+                        success = $true
+                        result  = $Result
+                    }
+                    Write-LogMessage -tenant $TenantFilter -Headers $Request.Headers -API $APINAME -message "Updated drift deviation status for $($Deviation.standardName) to $($Deviation.status) with reason: $Reason" -Sev 'Info'
                 } catch {
                     [PSCustomObject]@{
                         standardName = $Deviation.standardName
