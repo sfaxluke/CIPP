@@ -73,21 +73,39 @@ function Invoke-CIPPStandardSPOVersionControl {
 
     if ($DesiredAutoTrim) {
         $StateIsCorrect = $CurrentState.EnableAutoExpirationVersionTrim -eq $true
+
+        # With automatic trimming on, SharePoint manages the version limit and expiry itself, so
+        # they are not part of the desired state. The compare report and drift detection grade
+        # the current and expected objects as a whole, so the tenant-managed values must be left
+        # out of both sides - a null placeholder on the expected side never matches and marked
+        # every auto-trim tenant non-compliant.
+        $CurrentValue = [PSCustomObject]@{
+            EnableAutoExpirationVersionTrim = $CurrentState.EnableAutoExpirationVersionTrim
+        }
+        $ExpectedValue = [PSCustomObject]@{
+            EnableAutoExpirationVersionTrim = $true
+        }
     } else {
         $StateIsCorrect = ($CurrentState.EnableAutoExpirationVersionTrim -eq $false) -and
         ($CurrentState.MajorVersionLimit -eq $DesiredMajorVersionLimit) -and
         ($CurrentState.ExpireVersionsAfterDays -eq $DesiredExpireVersionsAfterDays)
+
+        $CurrentValue = [PSCustomObject]@{
+            EnableAutoExpirationVersionTrim = $CurrentState.EnableAutoExpirationVersionTrim
+            MajorVersionLimit               = $CurrentState.MajorVersionLimit
+            ExpireVersionsAfterDays         = $CurrentState.ExpireVersionsAfterDays
+        }
+        $ExpectedValue = [PSCustomObject]@{
+            EnableAutoExpirationVersionTrim = $false
+            MajorVersionLimit               = $DesiredMajorVersionLimit
+            ExpireVersionsAfterDays         = $DesiredExpireVersionsAfterDays
+        }
     }
 
-    $CurrentValue = [PSCustomObject]@{
-        EnableAutoExpirationVersionTrim = $CurrentState.EnableAutoExpirationVersionTrim
-        MajorVersionLimit               = $CurrentState.MajorVersionLimit
-        ExpireVersionsAfterDays         = $CurrentState.ExpireVersionsAfterDays
-    }
-    $ExpectedValue = [PSCustomObject]@{
-        EnableAutoExpirationVersionTrim = $DesiredAutoTrim
-        MajorVersionLimit               = if ($DesiredAutoTrim) { $null } else { $DesiredMajorVersionLimit }
-        ExpireVersionsAfterDays         = if ($DesiredAutoTrim) { $null } else { $DesiredExpireVersionsAfterDays }
+    $ExpectedDescription = if ($DesiredAutoTrim) {
+        'AutoTrim=True (version limit and expiry managed by Microsoft)'
+    } else {
+        "AutoTrim=False, MajorVersionLimit=$DesiredMajorVersionLimit, ExpireVersionsAfterDays=$DesiredExpireVersionsAfterDays"
     }
 
     if ($Settings.remediate -eq $true) {
@@ -111,7 +129,7 @@ function Invoke-CIPPStandardSPOVersionControl {
                     )
                 }
                 $CurrentState | Set-CIPPSPOTenant -MethodName 'SetFileVersionPolicy' -MethodParameters $MethodParams -UseCertificate
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Successfully configured SharePoint version control (AutoTrim: $DesiredAutoTrim, MajorVersionLimit: $DesiredMajorVersionLimit, ExpireVersionsAfterDays: $DesiredExpireVersionsAfterDays)" -sev Info
+                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Successfully configured SharePoint version control ($ExpectedDescription)" -sev Info
 
                 # Apply to all existing sites and their document libraries
                 if ($Settings.ApplyToExistingSites -eq $true) {
@@ -149,7 +167,7 @@ function Invoke-CIPPStandardSPOVersionControl {
         if ($StateIsCorrect) {
             Write-LogMessage -API 'Standards' -tenant $Tenant -message 'SharePoint version control settings are configured correctly' -sev Info
         } else {
-            $Message = "SharePoint version control is not configured correctly. Current: AutoTrim=$($CurrentState.EnableAutoExpirationVersionTrim), MajorVersionLimit=$($CurrentState.MajorVersionLimit), ExpireVersionsAfterDays=$($CurrentState.ExpireVersionsAfterDays). Expected: AutoTrim=$DesiredAutoTrim, MajorVersionLimit=$DesiredMajorVersionLimit, ExpireVersionsAfterDays=$DesiredExpireVersionsAfterDays"
+            $Message = "SharePoint version control is not configured correctly. Current: AutoTrim=$($CurrentState.EnableAutoExpirationVersionTrim), MajorVersionLimit=$($CurrentState.MajorVersionLimit), ExpireVersionsAfterDays=$($CurrentState.ExpireVersionsAfterDays). Expected: $ExpectedDescription"
             Write-StandardsAlert -message $Message -object $CurrentState -tenant $Tenant -standardName 'SPOVersionControl' -standardId $Settings.standardId
         }
     }
