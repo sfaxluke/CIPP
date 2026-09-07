@@ -41313,7 +41313,7 @@
                       "label": {
                         "x-cipp-field-source": "backend"
                       },
-                      "package": {
+                      "Package": {
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "PartitionKey": {
@@ -41329,7 +41329,7 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
+                      "Source": {
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "templateCount": {
@@ -58643,7 +58643,7 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
+                      "Source": {
                         "x-cipp-field-source": "storage"
                       },
                       "standards": {
