@@ -93,8 +93,17 @@ function Invoke-ExecDeployAppTemplate {
                 } else {
                     "Queued '$($App.appName)'"
                 }
-                Write-LogMessage -headers $Headers -API $APIName -message "Deployed app '$($App.appName)' ($AppType) from template $TemplateId" -Sev 'Info'
-                $DeployedResult
+
+                # Handlers signal rejection by status code, not by throwing.
+                $HandlerStatus = [int]$HandlerResult.StatusCode
+                if ($HandlerStatus -ge 200 -and $HandlerStatus -lt 300) {
+                    Write-LogMessage -headers $Headers -API $APIName -message "Deployed app '$($App.appName)' ($AppType) from template $TemplateId" -Sev 'Info'
+                    $DeployedResult
+                } else {
+                    $FailureText = "Failed to deploy app '$($App.appName)' ($AppType) from template $($TemplateId): $($DeployedResult -join '; ')"
+                    Write-LogMessage -headers $Headers -API $APIName -message $FailureText -Sev 'Error'
+                    $FailureText
+                }
             } catch {
                 $ErrorMessage = Get-CippException -Exception $_
                 "Failed '$($App.appName)': $($ErrorMessage.NormalizedError)"
