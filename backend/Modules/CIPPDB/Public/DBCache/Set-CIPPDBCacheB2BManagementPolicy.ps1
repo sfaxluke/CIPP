@@ -34,10 +34,12 @@ function Set-CIPPDBCacheB2BManagementPolicy {
             $DomainPolicy = $ParsedDefinition.B2BManagementPolicy.InvitationsAllowedAndBlockedDomainsPolicy
             $AllowedDomains = @($DomainPolicy.AllowedDomains)
             $BlockedDomains = @($DomainPolicy.BlockedDomains)
-            $Policy | Add-Member -NotePropertyName 'parsedDefinition' -NotePropertyValue $ParsedDefinition -Force
-            $Policy | Add-Member -NotePropertyName 'allowedDomains' -NotePropertyValue $AllowedDomains -Force
-            $Policy | Add-Member -NotePropertyName 'blockedDomains' -NotePropertyValue $BlockedDomains -Force
-            $Policy | Add-Member -NotePropertyName 'hasRestrictions' -NotePropertyValue (($AllowedDomains.Count -gt 0) -or ($BlockedDomains.Count -gt 0)) -Force
+            $Policy | Add-Member -NotePropertyMembers ([ordered]@{
+                    parsedDefinition = $ParsedDefinition
+                    allowedDomains   = $AllowedDomains
+                    blockedDomains   = $BlockedDomains
+                    hasRestrictions  = (($AllowedDomains.Count -gt 0) -or ($BlockedDomains.Count -gt 0))
+                }) -Force
             $Policy
         }
 
