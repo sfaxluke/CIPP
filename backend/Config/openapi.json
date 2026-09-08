@@ -28367,6 +28367,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "destination": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
                   "siteUrl": {
                     "$ref": "#/components/schemas/LabelValue"
                   },

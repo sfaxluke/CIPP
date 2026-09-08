@@ -867,6 +867,9 @@ export const useCippUserActions = () => {
         username: 'userPrincipalName',
         userid: 'id',
       },
+      defaultvalues: {
+        destination: { label: 'OneDrive root', value: 'root' },
+      },
       fields: [
         {
           type: 'autoComplete',
@@ -883,8 +886,20 @@ export const useCippUserActions = () => {
             queryKey: `sharepointSites-${tenant}`,
           },
         },
+        {
+          type: 'autoComplete',
+          name: 'destination',
+          label: 'Shortcut location',
+          multiple: false,
+          creatable: false,
+          options: [
+            { label: 'OneDrive root', value: 'root' },
+            { label: 'Shortcuts folder (Microsoft UI)', value: 'shortcuts' },
+          ],
+          validators: { required: 'Please select a shortcut location' },
+        },
       ],
-      confirmText: 'Select a SharePoint site to create a shortcut for:',
+      confirmText: 'Select a SharePoint site and where to create the OneDrive shortcut:',
       multiPost: false,
       condition: () => canWriteUser,
     },
