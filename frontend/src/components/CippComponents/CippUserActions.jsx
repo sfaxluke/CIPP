@@ -904,6 +904,20 @@ export const useCippUserActions = () => {
       condition: () => canWriteUser,
     },
     {
+      label: 'Migrate OneDrive Shortcuts',
+      type: 'POST',
+      icon: <CippIcons.Shortcut />,
+      url: '/api/ExecMigrateOneDriveShortCuts',
+      data: {
+        username: 'userPrincipalName',
+        userid: 'id',
+      },
+      confirmText:
+        'Migrate root OneDrive shortcuts for [userPrincipalName] into the Shortcuts folder?',
+      multiPost: false,
+      condition: () => canWriteUser,
+    },
+    {
       label: 'Set Sign In State',
       type: 'POST',
       icon: <CippIcons.LockPerson />,
