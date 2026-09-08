@@ -64,7 +64,7 @@
     "@tiptap/react": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
     "@vvo/tzdb": "^6.198.0",
-    "apexcharts": "6.6.1",
+    "apexcharts": "7.1.0",
     "axios": "1.18.1",
     "date-fns": "4.4.0",
     "diff": "^9.0.0",
