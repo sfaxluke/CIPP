@@ -6280,7 +6280,7 @@
           "Tenant > Standards"
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
@@ -6299,9 +6299,6 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "tenantFilter"
-                ],
                 "additionalProperties": true,
                 "x-cipp-passthrough": true,
                 "description": "This endpoint forwards the request body onward rather than reading a fixed set of fields. The properties listed here are the ones it is known to read; others may be accepted."
@@ -6341,7 +6338,8 @@
             "bearerAuth": []
           }
         ],
-        "x-cipp-role": "Tenant.Standards.ReadWrite"
+        "x-cipp-role": "Tenant.Standards.ReadWrite",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/AddStoreApp": {
