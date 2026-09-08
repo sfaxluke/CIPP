@@ -772,6 +772,56 @@ try {
     Write-Warning "  Could not enumerate file shares: $($_.Exception.Message)"
 }
 
+# ── Remove stale role assignments on the target site scope ───────────────────
+# The legacy template granted the function app Contributor on itself, and Azure removes
+# a deleted site's role assignments asynchronously - often minutes after the delete
+# returns. Deploying a same-named site while that row lingers fails the deploy
+# (RoleAssignmentUpdateNotPermitted) or loses the new grant to the late cleanup.
+# The site is about to be (re)created, so any assignment scoped exactly to it is
+# stale; inherited (resource group / subscription) rows are left alone.
+if (-not $SkipDeployment) {
+    $targetSiteScope = "/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Web/sites/$TargetWebAppName"
+    $targetSiteExists = [bool](Get-AzWebApp -ResourceGroupName $ResourceGroupName -Name $TargetWebAppName -ErrorAction SilentlyContinue)
+    if ($targetSiteExists) {
+        Write-Information "Web app '$TargetWebAppName' already exists - keeping its role assignments."
+    } else {
+        Write-Information "Checking for stale role assignments on '$TargetWebAppName'..."
+        $staleAssignments = @(Invoke-AzWithRetry -OperationName 'Listing role assignments' -ScriptBlock {
+                Get-AzRoleAssignment -Scope $targetSiteScope -ErrorAction Stop
+            } | Where-Object { $_.Scope -eq $targetSiteScope })
+        foreach ($assignment in $staleAssignments) {
+            Write-Information "  Removing stale '$($assignment.RoleDefinitionName)' assignment for $($assignment.ObjectType) $($assignment.ObjectId)"
+            if ($PSCmdlet.ShouldProcess($assignment.RoleAssignmentId, 'Remove stale role assignment')) {
+                try {
+                    Invoke-AzWithRetry -OperationName 'Removing stale role assignment' -ScriptBlock {
+                        Remove-AzRoleAssignment -InputObject $assignment -ErrorAction Stop
+                    }
+                } catch {
+                    # Azure's own cleanup may have beaten us to it.
+                    if ($_.Exception.Message -notmatch 'does not exist|NotFound') { throw }
+                }
+            }
+        }
+        if ($staleAssignments.Count -eq 0) {
+            Write-Information '  None found.'
+        } elseif (-not $WhatIfPreference) {
+            # Deletes are eventually consistent on the ARM side too - confirm they are gone
+            # before the deploy re-creates the scope.
+            $sweepAttempts = 0
+            do {
+                Start-Sleep -Seconds 5
+                $sweepAttempts++
+                $remainingAssignments = @(Get-AzRoleAssignment -Scope $targetSiteScope -ErrorAction SilentlyContinue | Where-Object { $_.Scope -eq $targetSiteScope })
+            } while ($remainingAssignments.Count -gt 0 -and $sweepAttempts -lt 12)
+            if ($remainingAssignments.Count -gt 0) {
+                Write-Warning "Stale role assignment(s) on '$TargetWebAppName' are still listed after $($sweepAttempts * 5)s - the deploy may fail with RoleAssignmentUpdateNotPermitted; re-run if it does."
+            } else {
+                Write-Information '  Stale role assignments removed.'
+            }
+        }
+    }
+}
+
 # ── Deploy cipp ─────────────────────────────────────────────────────────────
 $Deployment = $null
 if ($SkipDeployment) {
