@@ -5,8 +5,7 @@ function Invoke-CIPPMigrateOneDriveShortCuts {
         Migrates OneDrive root shortcuts into the Shortcuts folder.
     .DESCRIPTION
         Lists drive root children with Prefer: Include-Feature=AddToOneDrive, then PATCH-moves
-        each remoteItem shortcut that is not already under Shortcuts into special/shortcuts
-        (or a root Shortcuts folder if the special folder is not provisioned yet).
+        each remoteItem shortcut that is not already under Shortcuts into special/shortcuts.
     .FUNCTIONALITY
         Internal
     #>
@@ -73,30 +72,15 @@ function Invoke-CIPPMigrateOneDriveShortCuts {
         return $Result
     }
 
-    # Resolve (or create) the Shortcuts destination folder once per run.
-    $ShortcutsFolderId = $null
+    # Resolve the Shortcuts destination folder once per run.
     try {
         $ShortcutsFolder = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/users/$EscapedUser/drive/special/shortcuts?`$select=id,name" -tenantid $TenantFilter -asapp $true
         $ShortcutsFolderId = $ShortcutsFolder.id
     } catch {
-        try {
-            $Created = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/users/$EscapedUser/drive/root/children" -tenantid $TenantFilter -asapp $true -body (@{
-                    name                                = 'Shortcuts'
-                    folder                              = @{}
-                    '@microsoft.graph.conflictBehavior' = 'fail'
-                } | ConvertTo-Json -Depth 5)
-            $ShortcutsFolderId = $Created.id
-        } catch {
-            try {
-                $Existing = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/users/$EscapedUser/drive/root:/Shortcuts?`$select=id,name" -tenantid $TenantFilter -asapp $true
-                $ShortcutsFolderId = $Existing.id
-            } catch {
-                $ErrorMessage = Get-CippException -Exception $_
-                $Result = "Could not resolve or create the Shortcuts folder for $Username : $($ErrorMessage.NormalizedError)"
-                Write-LogMessage -API $APIName -headers $Headers -message $Result -Sev 'Error' -LogData $ErrorMessage
-                throw $Result
-            }
-        }
+        $ErrorMessage = Get-CippException -Exception $_
+        $Result = "Could not resolve the Shortcuts folder (special/shortcuts) for $Username : $($ErrorMessage.NormalizedError)"
+        Write-LogMessage -API $APIName -headers $Headers -message $Result -Sev 'Error' -LogData $ErrorMessage
+        throw $Result
     }
 
     $Migrated = [System.Collections.Generic.List[string]]::new()
