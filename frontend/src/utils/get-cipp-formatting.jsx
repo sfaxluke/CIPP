@@ -186,13 +186,33 @@ export const getCippFormatting = (
   }
 
   if (cellNameLower === 'compliancestate') {
-    if (isText) return data
-    const label = data?.label ?? data
+    const raw = data?.label ?? data
+    const complianceStateLabels = {
+      compliant: 'Compliant',
+      remediated: 'Remediated',
+      noncompliant: 'Non-compliant',
+      error: 'Error',
+      conflict: 'Conflict',
+      notapplicable: 'Not applicable',
+      unknown: 'Unknown',
+      notassigned: 'Not assigned',
+      ingraceperiod: 'In grace period',
+    }
     const complianceStateColor = {
       compliant: 'success',
+      remediated: 'success',
       noncompliant: 'error',
+      error: 'error',
+      conflict: 'warning',
+      ingraceperiod: 'warning',
+      notapplicable: 'default',
+      unknown: 'default',
+      notassigned: 'default',
     }
-    const color = complianceStateColor[String(label).toLowerCase()] ?? 'default'
+    const key = String(raw ?? '').toLowerCase()
+    const label = complianceStateLabels[key] ?? raw
+    if (isText) return label
+    const color = complianceStateColor[key] ?? 'default'
     return <Chip variant="outlined" label={label} size="small" color={color} />
   }
 
