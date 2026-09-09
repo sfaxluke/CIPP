@@ -1,4 +1,4 @@
-# Migrating to the Latest Version of CIPP
+# Migrating CyberDrain Hosted to the Latest Version of CIPP
 
 In July of 2026, we were pleased to announce new infrastructure for CIPP. Migrating to the new infrastructure gains speed and controlled cost. Newly deployed CIPP instances are already on the new infrastructure.
 
@@ -82,4 +82,8 @@ Users who load your pre-existing custom domain prior to the certificate being pr
 
 ## Self-Hosted Clients
 
-More information coming at a future date. We are only handling CyberDrain hosted migrations at this time.
+Please see this document for the migration script and instructions:
+
+{% content-ref url="migrating-to-the-new-infrastructure.md" %}
+[migrating-to-the-new-infrastructure.md](migrating-to-the-new-infrastructure.md)
+{% endcontent-ref %}
