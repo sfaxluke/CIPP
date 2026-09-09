@@ -58,6 +58,13 @@ describe("status-bar inset on surfaces that reach the top edge", () => {
     expect(theme.components.MuiDialog.styleOverrides.paperFullScreen.paddingTop).toBe(INSET);
   });
 
+  it("keeps a tall non-fullscreen phone dialog below the inset without double-padding fullscreen", () => {
+    const rule = theme.components.MuiDialog.styleOverrides.paper[MOBILE]["&:not(.MuiDialog-paperFullScreen)"];
+    expect(rule.marginTop).toBe(INSET);
+    expect(rule.maxHeight).toBe(`calc(100% - ${INSET})`);
+    expect(theme.components.MuiDialog.styleOverrides.paper[MOBILE].maxHeight).toBeUndefined();
+  });
+
   it("pads temporary left/right drawers only — the permanent side nav already sits under the top nav", () => {
     expect(drawerPaper({ variant: "temporary", anchor: "left" }).paddingTop).toBe(INSET);
     expect(drawerPaper({ variant: "temporary", anchor: "right" }).paddingTop).toBe(INSET);

@@ -227,8 +227,13 @@ export const createComponents = () => {
             margin: 0,
             width: "100%",
             maxWidth: "100%",
-            maxHeight: "100%",
             borderRadius: 0,
+            // A tall dialog fills the screen and, in a home-screen install, runs under the
+            // iOS status bar. Keep it below the inset; fullscreen dialogs pad themselves.
+            "&:not(.MuiDialog-paperFullScreen)": {
+              marginTop: "env(safe-area-inset-top, 0px)",
+              maxHeight: "calc(100% - env(safe-area-inset-top, 0px))",
+            },
           },
         },
         // Fullscreen dialogs and edge drawers reach the top of the screen. In a home-screen
