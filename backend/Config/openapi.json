@@ -7261,7 +7261,8 @@
                     "type": "string"
                   },
                   "tenantFilter": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "User creation is single-tenant only. Without this guard an 'AllTenants' (or otherwise unresolvable) tenantFilter fails Get-AuthorisedRequest, the Graph write helpers return $null non-terminating, and the endpoint reports success while creating nothing."
                   },
                   "usageLocation": {
                     "$ref": "#/components/schemas/LabelValue"
@@ -7399,6 +7400,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
