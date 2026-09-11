@@ -1,34 +1,11 @@
 import { useEffect } from 'react'
-import { EyeIcon, MagnifyingGlassIcon, TrashIcon } from '@heroicons/react/24/outline'
-import {
-  Archive,
-  Clear,
-  CloudDone,
-  ContentCopy,
-  Edit,
-  Email,
-  ForwardToInbox,
-  GroupAdd,
-  Launch,
-  LockClock,
-  LockPerson,
-  LockReset,
-  MeetingRoom,
-  Password,
-  PersonOff,
-  PhonelinkLock,
-  PhonelinkSetup,
-  Refresh,
-  Shortcut,
-  EditAttributes,
-  CloudSync,
-  Share,
-} from '@mui/icons-material'
+import { CippIcons } from '../../utils/icon-registry'
 import { getCippLicenseTranslation } from '../../utils/get-cipp-license-translation'
 import { useSettings } from '../../hooks/use-settings.js'
 import { usePermissions } from '../../hooks/use-permissions'
 import { Tooltip, Box, Divider, Typography, Alert, Skeleton, Link, IconButton } from '@mui/material'
 import CippFormComponent from './CippFormComponent'
+import { MfaVerifyForm } from './CippMfaVerifyForm'
 import { CippFormCondition } from './CippFormCondition'
 import { useWatch } from 'react-hook-form'
 import { ApiGetCall } from '../../api/ApiCall'
@@ -241,7 +218,7 @@ const TemporaryAccessPassForm = ({ formControl, row }) => {
                   onClick={() => tapPolicy.refetch()}
                   disabled={tapPolicy.isFetching}
                 >
-                  <Refresh fontSize="small" />
+                  <CippIcons.Refresh fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
@@ -533,7 +510,7 @@ export const useCippUserActions = () => {
       link: '/identity/administration/users/user?userId=[id]',
       pinned: true,
       multiPost: false,
-      icon: <EyeIcon />,
+      icon: <CippIcons.EyeIcon />,
       color: 'success',
     },
     {
@@ -541,7 +518,7 @@ export const useCippUserActions = () => {
       label: 'Edit User',
       link: '/identity/administration/users/user/edit?userId=[id]',
       pinned: true,
-      icon: <Edit />,
+      icon: <CippIcons.Edit />,
       color: 'success',
       target: '_self',
       condition: () => canWriteUser,
@@ -550,7 +527,7 @@ export const useCippUserActions = () => {
       label: 'View in Entra',
       link: 'https://entra.microsoft.com/[Tenant]/#view/Microsoft_AAD_UsersAndTenants/UserProfileMenuBlade/~/overview/userId/[id]',
       pinned: true,
-      icon: <Launch />,
+      icon: <CippIcons.Launch />,
       color: 'info',
       target: '_blank',
       multiPost: false,
@@ -559,7 +536,7 @@ export const useCippUserActions = () => {
     {
       label: 'Create Template from User',
       type: 'POST',
-      icon: <ContentCopy />,
+      icon: <CippIcons.ContentCopy />,
       url: '/api/AddUserDefaults',
       fields: [
         {
@@ -611,7 +588,7 @@ export const useCippUserActions = () => {
       //tested
       label: 'Research Compromised Account',
       type: 'GET',
-      icon: <MagnifyingGlassIcon />,
+      icon: <CippIcons.MagnifyingGlassIcon />,
       link: '/identity/administration/users/user/bec?userId=[id]',
       confirmText:
         'Are you sure you want to research if [userPrincipalName] is a compromised account?',
@@ -621,7 +598,7 @@ export const useCippUserActions = () => {
       //tested
       label: 'Create Temporary Access Pass',
       type: 'POST',
-      icon: <Password />,
+      icon: <CippIcons.Password />,
       url: '/api/ExecCreateTAP',
       data: { ID: 'userPrincipalName' },
       children: ({ formHook, row }) => <TemporaryAccessPassForm formControl={formHook} row={row} />,
@@ -635,7 +612,7 @@ export const useCippUserActions = () => {
       //tested
       label: 'Re-require MFA registration',
       type: 'POST',
-      icon: <PhonelinkSetup />,
+      icon: <CippIcons.PhonelinkSetup />,
       url: '/api/ExecResetMFA',
       data: { ID: 'userPrincipalName' },
       confirmText: 'Are you sure you want to reset MFA for [userPrincipalName]?',
@@ -646,17 +623,18 @@ export const useCippUserActions = () => {
       //tested
       label: 'Send MFA Push',
       type: 'POST',
-      icon: <PhonelinkLock />,
+      icon: <CippIcons.PhonelinkLock />,
       url: '/api/ExecSendPush',
       data: { UserEmail: 'userPrincipalName' },
-      confirmText: 'Are you sure you want to send an MFA request to [userPrincipalName]?',
+      children: ({ formHook, row }) => <MfaVerifyForm formControl={formHook} row={row} />,
+      confirmText: 'Send an MFA request to [userPrincipalName]?',
       multiPost: false,
     },
     {
       //tested
       label: 'Set Per-User MFA',
       type: 'POST',
-      icon: <LockPerson />,
+      icon: <CippIcons.LockPerson />,
       url: '/api/ExecPerUserMFA',
       data: { userId: 'id', userPrincipalName: 'userPrincipalName' },
       fields: [
@@ -682,7 +660,7 @@ export const useCippUserActions = () => {
       //tested
       label: 'Convert Mailbox',
       type: 'POST',
-      icon: <Email />,
+      icon: <CippIcons.Email />,
       url: '/api/ExecConvertMailbox',
       data: { ID: 'userPrincipalName' },
       fields: [
@@ -707,7 +685,7 @@ export const useCippUserActions = () => {
       //tested
       label: 'Enable Online Archive',
       type: 'POST',
-      icon: <Archive />,
+      icon: <CippIcons.Archive />,
       url: '/api/ExecEnableArchive',
       data: { ID: 'userPrincipalName' },
       confirmText: 'Are you sure you want to enable the online archive for [userPrincipalName]?',
@@ -718,7 +696,7 @@ export const useCippUserActions = () => {
       //tested
       label: 'Set Out of Office',
       type: 'POST',
-      icon: <MeetingRoom />,
+      icon: <CippIcons.MeetingRoom />,
       url: '/api/ExecSetOoO',
       data: {
         userId: 'userPrincipalName',
@@ -734,7 +712,7 @@ export const useCippUserActions = () => {
     {
       label: 'Add to Group',
       type: 'POST',
-      icon: <GroupAdd />,
+      icon: <CippIcons.GroupAdd />,
       url: '/api/EditGroup',
       customDataformatter: (row, action, formData) => {
         // Build the member list from selected users
@@ -811,7 +789,7 @@ export const useCippUserActions = () => {
       label: 'Manage Licenses',
       type: 'POST',
       url: '/api/ExecBulkLicense',
-      icon: <CloudDone />,
+      icon: <CippIcons.CloudDone />,
       data: { userIds: 'id' },
       multiPost: true,
       allowResubmit: true,
@@ -825,7 +803,7 @@ export const useCippUserActions = () => {
       label: 'Disable Email Forwarding',
       type: 'POST',
       url: '/api/ExecEmailForward',
-      icon: <ForwardToInbox />,
+      icon: <CippIcons.ForwardToInbox />,
       data: {
         username: 'userPrincipalName',
         userid: 'userPrincipalName',
@@ -838,7 +816,7 @@ export const useCippUserActions = () => {
     {
       label: 'Pre-provision OneDrive',
       type: 'POST',
-      icon: <CloudDone />,
+      icon: <CippIcons.CloudDone />,
       url: '/api/ExecOneDriveProvision',
       data: { UserPrincipalName: 'userPrincipalName' },
       confirmText: 'Are you sure you want to pre-provision OneDrive for [userPrincipalName]?',
@@ -848,7 +826,7 @@ export const useCippUserActions = () => {
     {
       label: 'Set OneDrive External Sharing',
       type: 'POST',
-      icon: <Share />,
+      icon: <CippIcons.Share />,
       url: '/api/ExecSetOneDriveSharing',
       data: { UPN: 'userPrincipalName' },
       fields: [
@@ -883,11 +861,14 @@ export const useCippUserActions = () => {
     {
       label: 'Add OneDrive Shortcut',
       type: 'POST',
-      icon: <Shortcut />,
+      icon: <CippIcons.Shortcut />,
       url: '/api/ExecOneDriveShortCut',
       data: {
         username: 'userPrincipalName',
         userid: 'id',
+      },
+      defaultvalues: {
+        destination: { label: 'OneDrive root', value: 'root' },
       },
       fields: [
         {
@@ -905,15 +886,41 @@ export const useCippUserActions = () => {
             queryKey: `sharepointSites-${tenant}`,
           },
         },
+        {
+          type: 'autoComplete',
+          name: 'destination',
+          label: 'Shortcut location',
+          multiple: false,
+          creatable: false,
+          options: [
+            { label: 'OneDrive root', value: 'root' },
+            { label: 'Shortcuts folder (Microsoft UI)', value: 'shortcuts' },
+          ],
+          validators: { required: 'Please select a shortcut location' },
+        },
       ],
-      confirmText: 'Select a SharePoint site to create a shortcut for:',
+      confirmText: 'Select a SharePoint site and where to create the OneDrive shortcut:',
+      multiPost: false,
+      condition: () => canWriteUser,
+    },
+    {
+      label: 'Migrate OneDrive Shortcuts',
+      type: 'POST',
+      icon: <CippIcons.Shortcut />,
+      url: '/api/ExecMigrateOneDriveShortCuts',
+      data: {
+        username: 'userPrincipalName',
+        userid: 'id',
+      },
+      confirmText:
+        'Migrate root OneDrive shortcuts for [userPrincipalName] into the Shortcuts folder?',
       multiPost: false,
       condition: () => canWriteUser,
     },
     {
       label: 'Set Sign In State',
       type: 'POST',
-      icon: <LockPerson />,
+      icon: <CippIcons.LockPerson />,
       url: '/api/ExecDisableUser',
       data: { ID: 'id' },
       // Pre-select the current sign-in state; leave unselected when the
@@ -959,7 +966,7 @@ export const useCippUserActions = () => {
     {
       label: 'Reset Password',
       type: 'POST',
-      icon: <LockReset />,
+      icon: <CippIcons.LockReset />,
       url: '/api/ExecResetPass',
       data: {
         ID: 'userPrincipalName',
@@ -981,7 +988,7 @@ export const useCippUserActions = () => {
     {
       label: 'Require Password Change at Next Logon',
       type: 'POST',
-      icon: <Password />,
+      icon: <CippIcons.Password />,
       url: '/api/ExecRequirePasswordChange',
       data: {
         ID: 'id',
@@ -994,7 +1001,7 @@ export const useCippUserActions = () => {
     {
       label: 'Set Password Expiration',
       type: 'POST',
-      icon: <LockClock />,
+      icon: <CippIcons.LockClock />,
       url: '/api/ExecPasswordNeverExpires',
       data: { userId: 'id', userPrincipalName: 'userPrincipalName' },
       fields: [
@@ -1017,7 +1024,7 @@ export const useCippUserActions = () => {
     {
       label: 'Clear Immutable ID',
       type: 'POST',
-      icon: <Clear />,
+      icon: <CippIcons.Clear />,
       url: '/api/ExecClrImmId',
       data: {
         ID: 'id',
@@ -1030,7 +1037,7 @@ export const useCippUserActions = () => {
       label: 'Set Source of Authority',
       type: 'POST',
       url: '/api/ExecSetCloudManaged',
-      icon: <CloudSync />,
+      icon: <CippIcons.CloudSync />,
       data: {
         ID: 'id',
         displayName: 'displayName',
@@ -1089,7 +1096,7 @@ export const useCippUserActions = () => {
     {
       label: 'Reprocess License Assignments',
       type: 'POST',
-      icon: <CloudDone />,
+      icon: <CippIcons.CloudDone />,
       url: '/api/ExecReprocessUserLicenses',
       data: { ID: 'id', userPrincipalName: 'userPrincipalName' },
       confirmText:
@@ -1100,7 +1107,7 @@ export const useCippUserActions = () => {
     {
       label: 'Revoke all user sessions',
       type: 'POST',
-      icon: <PersonOff />,
+      icon: <CippIcons.PersonOff />,
       url: '/api/ExecRevokeSessions',
       data: { ID: 'id', Username: 'userPrincipalName' },
       confirmText: 'Are you sure you want to revoke all sessions for [userPrincipalName]?',
@@ -1110,7 +1117,7 @@ export const useCippUserActions = () => {
     {
       label: 'Delete User',
       type: 'POST',
-      icon: <TrashIcon />,
+      icon: <CippIcons.Delete />,
       url: '/api/RemoveUser',
       data: { ID: 'id', userPrincipalName: 'userPrincipalName' },
       confirmText: 'Are you sure you want to delete [userPrincipalName]?',
@@ -1119,7 +1126,7 @@ export const useCippUserActions = () => {
     },
     {
       label: 'Edit Properties',
-      icon: <EditAttributes />,
+      icon: <CippIcons.EditAttributes />,
       multiPost: true,
       noConfirm: true,
       customFunction: (users, action, formData) => {

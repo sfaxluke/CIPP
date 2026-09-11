@@ -1,4 +1,5 @@
 import { Alert, Divider, InputAdornment, Typography } from '@mui/material'
+import { CippIcons } from '../../utils/icon-registry'
 import CippFormComponent from '../CippComponents/CippFormComponent'
 import { getCippValidator } from '../../utils/get-cipp-validator'
 import { toAutoCompleteOptions } from '../../utils/to-autocomplete-options'
@@ -14,7 +15,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useWatch } from 'react-hook-form'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
-import { Sync } from '@mui/icons-material'
 
 // Exchange only sends a sharing invitation for these calendar access levels.
 const sharedCalendarPermissionOptions = [
@@ -35,7 +35,7 @@ const sharedMailboxPermissionOptions = [
 const sharedMailboxApi = (tenantDomain) => ({
   queryKey: `SharedMailboxes-${tenantDomain}`,
   url: '/api/ListMailboxes',
-  data: { RecipientTypeDetails: 'SharedMailbox' },
+  data: { RecipientTypeDetails: 'SharedMailbox', Minimal: true },
   labelField: (option) => `${option.displayName} (${option.UPN})`,
   valueField: 'UPN',
 })
@@ -107,6 +107,21 @@ const CippAddEditUser = (props) => {
     control: formControl.control,
     name: 'id',
   })
+  // Watched so a later form reset (the user query refetches after a save and on mount) re-seeds
+  // the customData.* fields: reset wipes them, and without this the effect would not run again
+  // because the user id did not change, leaving a saved value showing as unset.
+  const manualAttributeNames = useMemo(
+    () =>
+      currentTenantManualMappings
+        .map((mapping) => mapping.customDataAttribute?.value)
+        .filter(Boolean),
+    [currentTenantManualMappings]
+  )
+  const manualAttributeValues = useWatch({
+    control: formControl.control,
+    name: manualAttributeNames,
+  })
+  const manualAttributeValuesKey = JSON.stringify(manualAttributeValues ?? [])
   useEffect(() => {
     if (
       formType === 'add' ||
@@ -124,7 +139,12 @@ const CippAddEditUser = (props) => {
         formControl.setValue(`customData.${attribute}`, value)
       }
     })
-  }, [formType, currentUserObjectId, currentTenantManualMappings])
+  }, [
+    formType,
+    currentUserObjectId,
+    currentTenantManualMappings,
+    manualAttributeValuesKey,
+  ])
 
   // Make new list of groups by removing userGroups from tenantGroups
   const filteredTenantGroups = useMemo(() => {
@@ -238,7 +258,7 @@ const CippAddEditUser = (props) => {
       return firstName
         .split(/\s+/)
         .map((word) => word.substring(0, n))
-        .join('')
+        .join('');
     })
 
     // Replace %LastName[n]% patterns (extract first n characters per word)
@@ -247,7 +267,7 @@ const CippAddEditUser = (props) => {
       return lastName
         .split(/\s+/)
         .map((word) => word.substring(0, n))
-        .join('')
+        .join('');
     })
 
     // Replace %FirstName% and %LastName%
@@ -607,7 +627,7 @@ const CippAddEditUser = (props) => {
                   : []
               }
               customAction={{
-                icon: <Sync />,
+                icon: <CippIcons.Sync />,
                 tooltip: 'Refresh templates',
                 onClick: () => {
                   userTemplates.refetch()
@@ -675,9 +695,7 @@ const CippAddEditUser = (props) => {
           type="textField"
           fullWidth
           label="Username"
-          InputProps={{
-            endAdornment: <InputAdornment position="end">@</InputAdornment>,
-          }}
+          slotProps={{ input: { endAdornment: <InputAdornment position="end">@</InputAdornment> } }}
           name="username"
           formControl={formControl}
           validators={{
@@ -1091,7 +1109,7 @@ const CippAddEditUser = (props) => {
           creatable={false}
           formControl={formControl}
           customAction={{
-            icon: <Sync />,
+            icon: <CippIcons.Sync />,
             tooltip: 'Refresh groups',
             onClick: () => {
               tenantGroups.refetch()
@@ -1173,7 +1191,7 @@ const CippAddEditUser = (props) => {
             creatable={false}
             formControl={formControl}
             customAction={{
-              icon: <Sync />,
+              icon: <CippIcons.Sync />,
               tooltip: 'Refresh groups',
               onClick: () => {
                 tenantGroups.refetch()
@@ -1314,7 +1332,7 @@ const CippAddEditUser = (props) => {
         </Grid>
       </>
     </Grid>
-  )
+  );
 }
 
 export default CippAddEditUser

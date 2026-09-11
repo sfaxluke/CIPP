@@ -39,6 +39,19 @@ export const CippWizardOffboarding = (props) => {
     refetchOnReconnect: false,
   })
 
+  // Warn unless "Send to integration" is confirmed on (no answer without AppSettings.Read).
+  const notificationSettings = ApiGetCall({
+    url: '/api/ListNotificationConfig',
+    queryKey: 'ListNotificationConfig',
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  })
+  const psaSelected = useWatch({ control: formControl.control, name: 'postExecution.psa' })
+  const showPsaIntegrationHint =
+    !!psaSelected &&
+    !notificationSettings.isLoading &&
+    notificationSettings.data?.sendtoIntegration !== true
+
   // Pull cached mailbox sizes (storageUsedInBytes, keyed by UPN) only when relevant
   const mailboxUsage = ApiGetCall({
     url: '/api/ListMailboxes',
@@ -524,7 +537,13 @@ export const CippWizardOffboarding = (props) => {
                   fullWidth
                   formControl={formControl}
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    display: 'block',
+                    mt: 1
+                  }}>
                   CIPP %variable% tokens (for example %tenantname%) stay literal here and are
                   resolved when the offboarding job runs. %username% is not the offboarded user.
                 </Typography>
@@ -600,6 +619,12 @@ export const CippWizardOffboarding = (props) => {
                 type="switch"
                 formControl={formControl}
               />
+              {showPsaIntegrationHint && (
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  PSA tickets are only sent when 'Send to integration' is enabled under Settings
+                  &gt; Notifications.
+                </Alert>
+              )}
             </Grid>
 
             <Grid size={{ sm: 12, xs: 12 }}>
@@ -646,5 +671,5 @@ export const CippWizardOffboarding = (props) => {
         replacementBehaviour="removeNulls"
       />
     </Stack>
-  )
+  );
 }

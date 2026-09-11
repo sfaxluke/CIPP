@@ -28,14 +28,16 @@ function Invoke-ListPIMRoleSettingsTemplates {
             $Row = $_
             try {
                 $Data = $Row.JSON | ConvertFrom-Json -Depth 100 -ErrorAction Stop
-                $Data | Add-Member -NotePropertyName 'GUID' -NotePropertyValue $Row.GUID -Force
-                $Data | Add-Member -NotePropertyName 'RowKey' -NotePropertyValue $Row.RowKey -Force
                 # Grade the stored settings so the list shows a template that has drifted below
                 # the floor (e.g. edited in the table) before it is deployed.
                 $Floor = Test-CIPPPIMRoleSettingsFloor -Settings (ConvertTo-CIPPPIMRoleSettings -InputObject $Data.settings)
-                $Data | Add-Member -NotePropertyName 'meetsSecureFloor' -NotePropertyValue $Floor.Valid -Force
-                $Data | Add-Member -NotePropertyName 'floorIssues' -NotePropertyValue @($Floor.Errors) -Force
-                $Data | Add-Member -NotePropertyName 'roleCount' -NotePropertyValue (@($Data.roles).Count) -Force
+                $Data | Add-Member -NotePropertyMembers ([ordered]@{
+                        GUID             = $Row.GUID
+                        RowKey           = $Row.RowKey
+                        meetsSecureFloor = $Floor.Valid
+                        floorIssues      = @($Floor.Errors)
+                        roleCount        = (@($Data.roles).Count)
+                    }) -Force
                 $Data
             } catch {
                 Write-LogMessage -headers $Headers -API $APIName -message "Failed to read PIM role settings template $($Row.RowKey): $($_.Exception.Message)" -sev 'Warning'

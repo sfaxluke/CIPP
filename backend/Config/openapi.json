@@ -279,6 +279,14 @@
                   "logbook": {
                     "$ref": "#/components/schemas/LabelValue"
                   },
+                  "PsaTicketPriority": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/LabelValue"
+                      }
+                    ],
+                    "description": "The audit form posts the raw form values, so an autocomplete selection arrives as a {label, value} object - unwrap it to the bare Halo priority id before storing."
+                  },
                   "RowKey": {
                     "type": "string"
                   },
@@ -2178,6 +2186,87 @@
         "x-cipp-role": "Tenant.Administration.ReadWrite"
       }
     },
+    "/api/AddEdgeApp": {
+      "post": {
+        "summary": "AddEdgeApp",
+        "operationId": "AddEdgeApp",
+        "tags": [
+          "Endpoint > Applications"
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "AssignTo": {
+                    "type": "string"
+                  },
+                  "CustomGroup": {
+                    "type": "string"
+                  },
+                  "displayLanguageLocale": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "edgeChannel": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "excludeGroup": {
+                    "type": "string"
+                  },
+                  "IntuneBody": {
+                    "type": "string"
+                  },
+                  "selectedTenants": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "customerId": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "additionalProperties": true,
+                "x-cipp-passthrough": true,
+                "description": "This endpoint forwards the request body onward rather than reading a fixed set of fields. The properties listed here are the ones it is known to read; others may be accepted."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Endpoint.Application.ReadWrite",
+        "x-cipp-any-tenant": true,
+        "x-cipp-reads-via": [
+          "Get-CIPPEdgeAppBody"
+        ]
+      }
+    },
     "/api/AddEditTransportRule": {
       "post": {
         "summary": "AddEditTransportRule",
@@ -3344,7 +3433,7 @@
           "Email-Exchange > Transport"
         ],
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -3354,9 +3443,13 @@
                     "type": "string"
                   },
                   "name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Posted from the row action; without a name the template lists blank."
                   }
                 },
+                "required": [
+                  "name"
+                ],
                 "additionalProperties": true,
                 "x-cipp-passthrough": true,
                 "description": "This endpoint forwards the request body onward rather than reading a fixed set of fields. The properties listed here are the ones it is known to read; others may be accepted."
@@ -4387,6 +4480,64 @@
         "x-cipp-role": "Identity.Role.ReadWrite"
       }
     },
+    "/api/AddJITRoleTemplate": {
+      "post": {
+        "summary": "AddJITRoleTemplate",
+        "operationId": "AddJITRoleTemplate",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Creates a JIT Role Template - a named allow-list of directory roles that can be assigned to a\nCIPP custom role to restrict which roles that role's members may grant via JIT Admin.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "roles": {
+                    "type": "string"
+                  },
+                  "templateName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "templateName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.Role.ReadWrite"
+      }
+    },
     "/api/AddMSPApp": {
       "post": {
         "summary": "AddMSPApp",
@@ -5315,21 +5466,21 @@
                   },
                   "Name": {
                     "type": "string",
-                    "description": "Validate required fields"
+                    "description": "Validate required fields. The \"create template from policy\" row action posts the policy row, which carries Name/PolicyName but no TemplateName."
                   },
                   "PolicyName": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Set name and comments - prioritize template-specific fields, falling back to the policy name so a template made from a policy is not listed with a blank name."
                   },
                   "TemplateDescription": {
                     "type": "string"
                   },
                   "TemplateName": {
                     "type": "string",
-                    "description": "Set name and comments - prioritize template-specific fields"
+                    "description": "Validate required fields. The \"create template from policy\" row action posts the policy row, which carries Name/PolicyName but no TemplateName."
                   }
                 },
                 "required": [
-                  "Name",
                   "PolicyName"
                 ]
               }
@@ -5454,6 +5605,7 @@
         "tags": [
           "Tenant > Administration > Alerts"
         ],
+        "description": "Creates or updates a scripted CIPP alert, stored as a hidden scheduled task.\n\nA selection of two or more tenants or groups is stored verbatim and expanded on every run,\nso tenant group membership is always current.",
         "requestBody": {
           "required": true,
           "content": {
@@ -5462,16 +5614,15 @@
                 "type": "object",
                 "properties": {
                   "excludedTenants": {
-                    "type": "string"
-                  },
-                  "RowKey": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Tenants or tenant groups to skip even when they fall within the selection above. Optional."
                   },
                   "tenantFilter": {
                     "type": "array",
                     "items": {
                       "type": "string"
-                    }
+                    },
+                    "description": "The tenants, tenant groups or *All Tenants the alert applies to. At least one is required."
                   }
                 },
                 "required": [
@@ -6129,7 +6280,7 @@
           "Tenant > Standards"
         ],
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
@@ -6148,9 +6299,6 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "tenantFilter"
-                ],
                 "additionalProperties": true,
                 "x-cipp-passthrough": true,
                 "description": "This endpoint forwards the request body onward rather than reading a fixed set of fields. The properties listed here are the ones it is known to read; others may be accepted."
@@ -6190,7 +6338,8 @@
             "bearerAuth": []
           }
         ],
-        "x-cipp-role": "Tenant.Standards.ReadWrite"
+        "x-cipp-role": "Tenant.Standards.ReadWrite",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/AddStoreApp": {
@@ -6914,11 +7063,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": {
-                    "type": "string"
+                  "Name": {
+                    "type": "string",
+                    "description": "Posted from the row action; without a name the template lists blank and deploys with no parameters."
                   },
                   "PowerShellCommand": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Posted from the row action; without a name the template lists blank and deploys with no parameters."
                   }
                 },
                 "additionalProperties": true,
@@ -7110,7 +7261,8 @@
                     "type": "string"
                   },
                   "tenantFilter": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "User creation is single-tenant only. Without this guard an 'AllTenants' (or otherwise unresolvable) tenantFilter fails Get-AuthorisedRequest, the Graph write helpers return $null non-terminating, and the endpoint reports success while creating nothing."
                   },
                   "usageLocation": {
                     "$ref": "#/components/schemas/LabelValue"
@@ -7248,6 +7400,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
           },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
@@ -9189,6 +9344,68 @@
                   "GUID",
                   "templateName",
                   "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.Role.ReadWrite"
+      }
+    },
+    "/api/EditJITRoleTemplate": {
+      "post": {
+        "summary": "EditJITRoleTemplate",
+        "operationId": "EditJITRoleTemplate",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Updates an existing JIT Role Template.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "GUID": {
+                    "type": "string"
+                  },
+                  "roles": {
+                    "type": "string"
+                  },
+                  "templateName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "GUID",
+                  "templateName"
                 ]
               }
             }
@@ -11224,8 +11441,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "SkipCache": {
+                    "type": "string",
+                    "description": "Re-run the check instead of serving the cached result."
+                  },
                   "TenantId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The tenant to (re)check for the 'Tenants' type. Query or body, for the same reason as Type."
+                  },
+                  "Type": {
+                    "type": "string",
+                    "description": "Which self-diagnostic to run: Permissions, Tenants or GDAP. Read from either the query string or the body: the UI calls this as a GET with ?Type=, while a POST dispatcher (the MCP gateway documents it as POST because it also reads a body field) delivers it in the body - reading only the query left both empty and returned an empty result for every Type."
                   }
                 }
               }
@@ -11239,12 +11465,22 @@
             "description": "Re-run the check instead of serving the cached result.",
             "required": false,
             "schema": {
-              "type": "boolean"
+              "type": "string"
+            }
+          },
+          {
+            "name": "TenantId",
+            "in": "query",
+            "description": "The tenant to (re)check for the 'Tenants' type. Query or body, for the same reason as Type.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           },
           {
             "name": "Type",
             "in": "query",
+            "description": "Which self-diagnostic to run: Permissions, Tenants or GDAP. Read from either the query string or the body: the UI calls this as a GET with ?Type=, while a POST dispatcher (the MCP gateway documents it as POST because it also reads a body field) delivers it in the body - reading only the query left both empty and returned an empty result for every Type.",
             "required": false,
             "schema": {
               "type": "string",
@@ -11500,8 +11736,22 @@
                         "GroupId": {
                           "type": "string"
                         },
+                        "Results": {
+                          "type": "string"
+                        },
                         "roleDefinitionId": {
                           "type": "string"
+                        },
+                        "RoleMappings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "roleDefinitionId": {
+                                "type": "string"
+                              }
+                            }
+                          }
                         },
                         "RoleName": {
                           "type": "string"
@@ -11510,7 +11760,8 @@
                     }
                   },
                   "templateId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Add-CIPPGDAPRoleTemplate already writes customer-visible logs for the template path"
                   }
                 }
               }
@@ -11782,7 +12033,11 @@
           }
         ],
         "x-cipp-role": "Tenant.Relationship.ReadWrite",
-        "x-cipp-any-tenant": true
+        "x-cipp-any-tenant": true,
+        "x-cipp-reads-via": [
+          "Add-CIPPGDAPRoleTemplate",
+          "New-CIPPGDAPRoleMapping"
+        ]
       }
     },
     "/api/ExecAddMultiTenantApp": {
@@ -12117,6 +12372,9 @@
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         },
         "security": [
@@ -13280,7 +13538,7 @@
         "tags": [
           "CIPP > Settings"
         ],
-        "description": "Drives the super-admin \"Custom Domains\" page. All actions operate on the App Service that\nhosts this CIPP instance (Microsoft.Web/sites/$env:WEBSITE_SITE_NAME) using the managed\nidentity via New-CIPPAzRestRequest — the same resource and auth path the Container\nManagement page uses.\n\nActions (passed as Query.Action or Body.Action):\n    List           - Site metadata (default hostname, inbound IP) plus every hostname\n                     binding and any App Service Managed Certificate that matches.\n    CheckDns       - Live DoH lookup of the alias record a custom domain needs. CIPP no\n                     longer uses domain-verification TXT records, so a leftover\n                     asuid.<host> record is detected and flagged for removal rather than\n                     requested. Powers wizard step 1 + resume.\n    AddBinding     - Create the hostname binding (wizard step 2). Azure re-validates ownership.\n    AddCertificate - Create an App Service Managed Certificate and enable the SNI SSL binding\n                     (wizard step 3). Safe to re-run — reuses an existing cert if present.\n    Remove         - Delete a custom hostname binding (and its managed cert, best effort).\n\nEvery action is independently re-runnable so the wizard can resume a half-finished domain or\nretry a failed step without redoing the ones that already succeeded.",
+        "description": "Drives the super-admin \"Custom Domains\" page. All actions operate on the App Service that\nhosts this CIPP instance (Microsoft.Web/sites/$env:WEBSITE_SITE_NAME) using the managed\nidentity via New-CIPPAzRestRequest — the same resource and auth path the Container\nManagement page uses.\n\nActions (passed as Query.Action or Body.Action):\n    List           - Site metadata (default hostname, inbound IP) plus every hostname\n                     binding, any App Service Managed Certificate that matches, and the\n                     state of a certificate job still running in the background.\n    CheckDns       - Live DoH lookup of the alias record a custom domain needs. CIPP no\n                     longer uses domain-verification TXT records, so a leftover\n                     asuid.<host> record is detected and flagged for removal rather than\n                     requested. Powers wizard step 1 + resume.\n    AddBinding     - Create the hostname binding (wizard step 2). Azure validates ownership\n                     through the alias record.\n    AddCertificate - Issue an App Service Managed Certificate and enable the SNI SSL binding\n                     (wizard step 3) via Invoke-CIPPCustomDomainCertificate. Issuance that\n                     outlives the request carries on as a hidden scheduled task that retries\n                     every 15 minutes, a few times, then stops.\n    Remove         - Delete a custom hostname binding (and its managed cert, best effort).\n\nEvery action is independently re-runnable so the wizard can resume a half-finished domain or\nretry a failed step without redoing the ones that already succeeded.",
         "requestBody": {
           "required": true,
           "content": {
@@ -13290,6 +13548,10 @@
                 "properties": {
                   "Action": {
                     "type": "string"
+                  },
+                  "DnsRecordType": {
+                    "type": "string",
+                    "description": "Which alias record Azure should validate against: the one CheckDns saw resolve (A or CNAME), else the recommended type for this hostname shape."
                   },
                   "Hostname": {
                     "type": "string"
@@ -14293,7 +14555,7 @@
         "tags": [
           "CIPP > Settings"
         ],
-        "description": "Returns Azure portal deep links for the CIPP deployment's own infrastructure (resource group, key vault, function app, static web app) plus its subscription, SKU, hosting mode and timezone.",
+        "description": "Returns Azure portal deep links for the CIPP deployment's own infrastructure (resource group, key vault, the function app or web app, its App Service plan, static web app) plus its subscription, SKU and timezone. Whether the instance is CyberDrain-hosted or CIPP-NG comes from /api/me.",
         "responses": {
           "200": {
             "description": "Success",
@@ -15967,6 +16229,70 @@
         "x-cipp-role": "CIPP.Core.ReadWrite"
       }
     },
+    "/api/ExecCIPPDBCacheAdmin": {
+      "post": {
+        "summary": "SuperAdmin browse / remove / empty for CIPPDB (CippReportingDB) cache collections.",
+        "operationId": "ExecCIPPDBCacheAdmin",
+        "tags": [
+          "CIPP > Core"
+        ],
+        "description": "Typed alternative to Table Maintenance for the reporting cache. List returns decoded\ncache objects stamped with CIPPPartitionKey / CIPPRowKey / CIPPETag so the UI can\ndelete by storage key. Empty clears an entire type for a tenant (or AllTenants).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
+                  "Rows": {
+                    "type": "string"
+                  },
+                  "TenantFilter": {
+                    "type": "string"
+                  },
+                  "Type": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "TenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.SuperAdmin.ReadWrite"
+      }
+    },
     "/api/ExecCippFunction": {
       "post": {
         "summary": "Execute a CIPPCore function",
@@ -16569,9 +16895,14 @@
                       "x-cipp-field-source": "backend"
                     },
                     "RowKey": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "SASUrl": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "SecretValue": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "severity": {
@@ -16727,7 +17058,7 @@
                       },
                       "standardsTemplateId": {
                         "type": "string",
-                        "description": "Without this the comparison would report the policy as missing while remediation would happily overwrite an existing, similarly named one. Mirrors the candidate selection Set-CIPPIntunePolicy performs at deployment time."
+                        "description": "tenantFilter is optional here - supplying it resolves the template the way the standard would for that tenant instead of comparing the stored template verbatim."
                       },
                       "templateGuid": {
                         "type": "string",
@@ -16768,7 +17099,7 @@
                       },
                       "standardsTemplateId": {
                         "type": "string",
-                        "description": "Without this the comparison would report the policy as missing while remediation would happily overwrite an existing, similarly named one. Mirrors the candidate selection Set-CIPPIntunePolicy performs at deployment time."
+                        "description": "tenantFilter is optional here - supplying it resolves the template the way the standard would for that tenant instead of comparing the stored template verbatim."
                       },
                       "templateGuid": {
                         "type": "string",
@@ -18022,6 +18353,9 @@
                 "type": "object",
                 "properties": {
                   "Action": {
+                    "type": "string"
+                  },
+                  "AllowedRolesTemplate": {
                     "type": "string"
                   },
                   "AllowedTenants": {
@@ -20196,6 +20530,69 @@
         "x-cipp-role": "Exchange.Mailbox.ReadWrite"
       }
     },
+    "/api/ExecEmptySiteRecycleBin": {
+      "post": {
+        "summary": "ExecEmptySiteRecycleBin",
+        "operationId": "ExecEmptySiteRecycleBin",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Permanently empty a site recycle bin (first stage, second stage, or both).\nItem ids are used only server-side; the response never includes file names.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "SiteUrl": {
+                    "type": "string"
+                  },
+                  "Stage": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "SiteUrl",
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.SiteRecycleBin.ReadWrite"
+      }
+    },
     "/api/ExecEnableArchive": {
       "post": {
         "summary": "ExecEnableArchive",
@@ -20830,7 +21227,7 @@
           {
             "name": "TicketType",
             "in": "query",
-            "description": "Outcomes and priorities are scoped to a ticket type. The settings page sends the ticket type currently selected in the form so the lists follow the dropdown; without it both fall back to whatever ticket type was last saved.",
+            "description": "Outcomes and priorities are scoped to a ticket type. The settings page sends the ticket type currently selected in the form so the lists follow the dropdown; without it both fall back to whatever ticket type was last saved. @() on each: PowerShell unrolls single-element output, so a ticket type with one outcome (or a lookup that answers with a single explanatory row) would otherwise serialise as a bare object and break callers that expect a list.",
             "required": false,
             "schema": {
               "type": "string"
@@ -21673,6 +22070,9 @@
           },
           "403": {
             "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         },
         "security": [
@@ -21849,7 +22249,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "CustomSuffix": {
+                    "type": "string"
+                  },
                   "GroupId": {
+                    "type": "string"
+                  },
+                  "NewRoles": {
                     "type": "string"
                   },
                   "OriginalTemplateId": {
@@ -21861,6 +22267,12 @@
                     "items": {
                       "type": "object",
                       "properties": {
+                        "GroupId": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
                         "roleDefinitionId": {
                           "type": "string"
                         }
@@ -21869,7 +22281,7 @@
                   },
                   "TemplateId": {
                     "type": "string",
-                    "description": "Use OriginalTemplateId if provided (for rename), otherwise use TemplateId"
+                    "description": "Template-first save: creates any group mappings the editor asked for, then writes the full mapping set to the template in one shot."
                   }
                 }
               }
@@ -21886,7 +22298,8 @@
               "enum": [
                 "Add",
                 "Delete",
-                "Edit"
+                "Edit",
+                "Save"
               ]
             }
           },
@@ -21912,12 +22325,18 @@
                       "type": "string",
                       "x-cipp-field-source": "storage"
                     },
+                    "GroupMappings": {
+                      "x-cipp-field-source": "frontend"
+                    },
                     "PartitionKey": {
                       "x-cipp-field-source": "storage"
                     },
                     "RoleMappings": {
                       "type": "string",
-                      "x-cipp-field-source": "storage,backend,frontend"
+                      "x-cipp-field-source": "storage,backend"
+                    },
+                    "Roles": {
+                      "x-cipp-field-source": "frontend"
                     },
                     "RowKey": {
                       "x-cipp-field-source": "storage"
@@ -23569,7 +23988,11 @@
                 "type": "object",
                 "properties": {
                   "AdminRoles": {
-                    "$ref": "#/components/schemas/LabelValue"
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/LabelValue"
+                    },
+                    "description": "Enforce the caller's allowed JIT roles (from the JIT Role Template on their custom role). Get-CIPPJITAdminAllowedRoles is authoritative and fails closed for restricted callers, so we trust its result rather than swallowing errors here."
                   },
                   "Domain": {
                     "$ref": "#/components/schemas/LabelValue"
@@ -24189,6 +24612,7 @@
                       "x-cipp-field-source": "graph-entity"
                     },
                     "RowKey": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "samlMetadataUrl": {
@@ -24196,6 +24620,10 @@
                       "x-cipp-field-source": "graph-entity"
                     },
                     "SASUrl": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "SecretValue": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "serviceManagementReference": {
@@ -24501,12 +24929,35 @@
           "Email-Exchange > Administration"
         ],
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {}
+                "properties": {
+                  "Delete": {
+                    "type": "string"
+                  },
+                  "deviceid": {
+                    "type": "string"
+                  },
+                  "guid": {
+                    "type": "string"
+                  },
+                  "Quarantine": {
+                    "type": "string"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  },
+                  "Userid": {
+                    "type": "string",
+                    "description": "Interact with query parameters or the body of the request. This is a state-changing action, so the frontend dispatches it as a POST; keep the query fallback for backwards compatibility."
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
               }
             }
           }
@@ -24550,6 +25001,7 @@
           {
             "name": "Userid",
             "in": "query",
+            "description": "Interact with query parameters or the body of the request. This is a state-changing action, so the frontend dispatches it as a POST; keep the query fallback for backwards compatibility.",
             "required": false,
             "schema": {
               "type": "string"
@@ -25639,6 +26091,66 @@
           }
         ],
         "x-cipp-role": "Security.Alert.Read"
+      }
+    },
+    "/api/ExecMigrateOneDriveShortCuts": {
+      "post": {
+        "summary": "ExecMigrateOneDriveShortCuts",
+        "operationId": "ExecMigrateOneDriveShortCuts",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.User.ReadWrite"
       }
     },
     "/api/ExecModifyCalPerms": {
@@ -27333,6 +27845,9 @@
               }
             }
           },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
           "401": {
             "description": "Unauthorized - invalid or missing bearer token"
           },
@@ -27542,6 +28057,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
+        "description": "Runs the offboarding wizard: one scheduled offboarding job per user, immediately or at the\nscheduled time, reporting live progress under one job id. Action=Rerun queues an existing\noffboarding task again; Action=RerunStep queues one step of it, reported to the same progress row.",
         "requestBody": {
           "required": true,
           "content": {
@@ -27549,6 +28065,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "Action": {
+                    "type": "string"
+                  },
                   "forward": {
                     "$ref": "#/components/schemas/LabelValue"
                   },
@@ -27588,6 +28107,18 @@
                     },
                     "description": "Scheduled: when enabled, date must be a valid Unix timestamp"
                   },
+                  "StepIndex": {
+                    "type": "integer",
+                    "description": "Zero-based index of the step, as listed in the progress row, to run again"
+                  },
+                  "StepTitle": {
+                    "type": "string",
+                    "description": "Title of that step, used to name the re-run task"
+                  },
+                  "TaskId": {
+                    "type": "string",
+                    "description": "RowKey of the offboarding task to run again"
+                  },
                   "tenantFilter": {
                     "allOf": [
                       {
@@ -27613,19 +28144,23 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "Action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
-                  "properties": {
-                    "Results": {
-                      "x-cipp-field-source": "backend"
-                    }
-                  }
+                  "$ref": "#/components/schemas/StandardResults"
                 }
               }
             }
@@ -27746,7 +28281,7 @@
                     "type": "boolean"
                   },
                   "standardsExcludeAllTenants": {
-                    "type": "string"
+                    "type": "boolean"
                   }
                 }
               }
@@ -27790,6 +28325,9 @@
                     },
                     "RowKey": {
                       "type": "string",
+                      "x-cipp-field-source": "storage,backend"
+                    },
+                    "StandardsExcludeAllTenants": {
                       "x-cipp-field-source": "storage,backend"
                     },
                     "Status": {
@@ -27910,6 +28448,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "destination": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
                   "siteUrl": {
                     "$ref": "#/components/schemas/LabelValue"
                   },
@@ -28037,7 +28578,8 @@
                 "type": "object",
                 "properties": {
                   "enabled": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "description": "Subscription create/update is logged by New-CIPPGraphSubscription; log the onboarding config write here."
                   },
                   "EventType": {
                     "$ref": "#/components/schemas/LabelValue"
@@ -29371,6 +29913,69 @@
           }
         ],
         "x-cipp-role": "Exchange.Mailbox.ReadWrite"
+      }
+    },
+    "/api/ExecRemoveOneDriveShortCut": {
+      "post": {
+        "summary": "ExecRemoveOneDriveShortCut",
+        "operationId": "ExecRemoveOneDriveShortCut",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "name": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  },
+                  "tenantFilter": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "$ref": "#/components/schemas/LabelValue"
+                  }
+                },
+                "required": [
+                  "tenantFilter"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.User.ReadWrite"
       }
     },
     "/api/ExecRemoveRestrictedUser": {
@@ -31917,7 +32522,7 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Sends a test MFA push notification to a user's authenticator app and reports whether it was approved. Used to confirm a user's MFA registration works. This causes a real prompt on the user's device.",
+        "description": "Sends a test MFA push notification to a user's authenticator app and reports whether it was approved, or - when an OTP code is supplied - verifies that typed code without sending a push. Used to confirm a user's MFA registration works. The push path causes a real prompt on the user's device.",
         "requestBody": {
           "required": true,
           "content": {
@@ -31925,6 +32530,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "OTP": {
+                    "type": "string",
+                    "description": "When an OTP code is supplied we verify that code instead of sending a push notification."
+                  },
                   "TenantFilter": {
                     "type": "string"
                   },
@@ -31946,10 +32555,366 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                  "description": "Derived from the Microsoft Graph entity it queries, and the fields the endpoint selects onto each record. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
                   "properties": {
+                    "aboutMe": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "accountEnabled": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "ageGroup": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "assignedLicenses": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "assignedPlans": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "authorizationInfo": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "birthday": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "businessPhones": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "city": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "cloudLicensing": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "cloudRealtimeCommunicationInfo": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "companyName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "consentProvidedForMinor": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "country": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "createdDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "creationType": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "customSecurityAttributes": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deletedDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "department": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deviceEnrollmentLimit": {
+                      "type": "integer",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "deviceKeys": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "displayName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "employeeHireDate": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "employeeId": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "employeeLeaveDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "employeeOrgData": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "employeeType": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "externalUserState": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "externalUserStateChangeDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "faxNumber": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "givenName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "hireDate": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "id": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "identities": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "identityGovernance": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "identityParentId": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "imAddresses": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "infoCatalogs": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "interests": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "isLicenseReconciliationNeeded": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "isManagementRestricted": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "isResourceAccount": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "jobTitle": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "lastPasswordChangeDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "legalAgeGroupClassification": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "licenseAssignmentStates": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "mail": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "mailboxSettings": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "mailNickname": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "mobilePhone": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "mySite": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "officeLocation": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesDistinguishedName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesDomainName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesExtensionAttributes": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesImmutableId": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesLastSyncDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesProvisioningErrors": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesSamAccountName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesSecurityIdentifier": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesSipInfo": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesSyncEnabled": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "onPremisesUserPrincipalName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "otherMails": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "passwordPolicies": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "passwordProfile": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "pastProjects": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "postalCode": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "preferredDataLocation": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "preferredLanguage": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "preferredName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "print": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "provisionedPlans": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "proxyAddresses": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "refreshTokensValidFromDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "responsibilities": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
                     "Results": {
                       "x-cipp-field-source": "backend"
+                    },
+                    "schools": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "securityIdentifier": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "serviceProvisioningErrors": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "showInAddressList": {
+                      "type": "boolean",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "signInActivity": {
+                      "type": "object",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "signInSessionsValidFromDateTime": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "skills": {
+                      "type": "array",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "state": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "streetAddress": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "surname": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "usageLocation": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "userPrincipalName": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
+                    },
+                    "userType": {
+                      "type": "string",
+                      "x-cipp-field-source": "graph-entity"
                     }
                   }
                 }
@@ -35994,9 +36959,14 @@
                       "x-cipp-field-source": "storage"
                     },
                     "RowKey": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "SASUrl": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "SecretValue": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "TenantId": {
@@ -36277,6 +37247,7 @@
                         },
                         "status": {
                           "type": "string",
+                          "description": "The status is written at the end of this block, after the action it implies succeeds.",
                           "x-cipp-observed-values": [
                             "deniedDelete",
                             "DeniedRemediate"
@@ -36421,9 +37392,14 @@
                       "x-cipp-field-source": "backend"
                     },
                     "RowKey": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "SASUrl": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "SecretValue": {
+                      "type": "string",
                       "x-cipp-field-source": "storage"
                     },
                     "TenantId": {
@@ -38904,6 +39880,59 @@
         "x-cipp-any-tenant": true
       }
     },
+    "/api/ListAsyncDeployment": {
+      "get": {
+        "summary": "Get the live progress of a background job",
+        "operationId": "ListAsyncDeployment",
+        "tags": [
+          "CIPP > Scheduler"
+        ],
+        "description": "Returns the status rows of a background job that reports progress while it runs, such as a\nuser offboarding started from the wizard: one row per target (the user) with its overall\nstatus and the status and message of every step.",
+        "parameters": [
+          {
+            "name": "DeploymentId",
+            "in": "query",
+            "description": "The job id handed back when the work was queued (e.g. DeploymentId from ExecOffboardUser)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.Scheduler.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
     "/api/ListAuditLogCoverage": {
       "get": {
         "summary": "ListAuditLogCoverage",
@@ -39576,6 +40605,9 @@
                       "id": {
                         "type": "string",
                         "x-cipp-field-source": "graph"
+                      },
+                      "lastSyncDateTime": {
+                        "x-cipp-field-source": "backend"
                       },
                       "numberOfHoursFromLastSync": {
                         "x-cipp-field-source": "backend"
@@ -40377,6 +41409,67 @@
         "x-cipp-role": "Exchange.Mailbox.Read"
       }
     },
+    "/api/ListCAPolicyCoverage": {
+      "get": {
+        "summary": "ListCAPolicyCoverage",
+        "operationId": "ListCAPolicyCoverage",
+        "tags": [
+          "Tenant > Conditional"
+        ],
+        "description": "Resolves identity assignment coverage for a single Conditional Access policy: which users\nare touched by includes or exclusions, their net status (covered or excluded), and why\n(users, transitive groups, roles, guests, special tokens). Does not evaluate apps,\nlocations, or sign-in what-if conditions.",
+        "parameters": [
+          {
+            "name": "GUID",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Tenant.ConditionalAccess.Read"
+      }
+    },
     "/api/ListCAtemplates": {
       "get": {
         "summary": "ListCAtemplates",
@@ -40438,7 +41531,7 @@
                       "label": {
                         "x-cipp-field-source": "backend"
                       },
-                      "package": {
+                      "Package": {
                         "x-cipp-field-source": "storage,frontend"
                       },
                       "PartitionKey": {
@@ -40454,8 +41547,8 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
-                        "x-cipp-field-source": "storage"
+                      "Source": {
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "templateCount": {
                         "x-cipp-field-source": "backend"
@@ -41129,8 +42222,34 @@
         "tags": [
           "Tenant > Conditional"
         ],
-        "description": "Lists Conditional Access policies for a tenant with resolved display names for users, groups, applications, and locations.",
+        "description": "Lists Conditional Access policies for a tenant with resolved display names for users, groups, applications, and locations. When manualPagination is set on an AllTenants read, one page is returned per request with a continuation token in Metadata.nextLink.",
         "parameters": [
+          {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request with a continuation token in Metadata.nextLink; AllTenants reads only.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
           {
             "$ref": "#/components/parameters/tenantFilter"
           }
@@ -44956,7 +46075,8 @@
                     "type": "string"
                   },
                   "cmdParams": {
-                    "type": "string"
+                    "type": "object",
+                    "description": "Parameters to splat onto the Exchange cmdlet, as an object of name/value pairs (e.g. { \"Identity\": \"user@contoso.com\" }). Cast to an object so the generated schema types cmdParams as an object rather than a string - a string-typed schema made the client reject an object body, leaving no way to pass parameters."
                   },
                   "Compliance": {
                     "type": "boolean"
@@ -45180,7 +46300,7 @@
                         "x-cipp-field-source": "storage"
                       },
                       "ExecutedTime": {
-                        "x-cipp-field-source": "frontend"
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "Hidden": {
                         "type": "boolean",
@@ -45203,6 +46323,10 @@
                         "x-cipp-field-source": "storage"
                       },
                       "PsaTicketId": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PsaTicketPriority": {
                         "type": "string",
                         "x-cipp-field-source": "storage"
                       },
@@ -45965,7 +47089,18 @@
         "tags": [
           "Tenant > GDAP"
         ],
-        "description": "Lists the configured GDAP role-to-security-group mappings used for delegated admin access.",
+        "description": "Lists the configured GDAP role-to-security-group mappings used for delegated admin access.\nPass ?validate=true to annotate each mapping with the state of its partner tenant group.",
+        "parameters": [
+          {
+            "name": "validate",
+            "in": "query",
+            "description": "Opt-in only: other consumers of this endpoint depend on the unannotated shape.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -45986,6 +47121,12 @@
                       },
                       "GroupName": {
                         "x-cipp-field-source": "storage,backend,frontend"
+                      },
+                      "GroupStatus": {
+                        "x-cipp-field-source": "backend,frontend"
+                      },
+                      "GroupStatusMessage": {
+                        "x-cipp-field-source": "backend"
                       },
                       "PartitionKey": {
                         "x-cipp-field-source": "storage"
@@ -46008,6 +47149,9 @@
                       "Timestamp": {
                         "type": "string",
                         "x-cipp-field-source": "storage"
+                      },
+                      "UsedInTemplates": {
+                        "x-cipp-field-source": "frontend"
                       }
                     }
                   }
@@ -46702,6 +47846,15 @@
             }
           },
           {
+            "name": "maxPageBytes",
+            "in": "query",
+            "description": "Paged AllTenants cache reads only: target page size in bytes of raw JSON, clamped between 262144 and 8388608 (default 4000000). Pages always hold at least one whole tenant.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
             "name": "nextLink",
             "in": "query",
             "description": "Continue a manualPagination walk: pass back the @odata.nextLink returned with the previous page. Endpoint is still required, and the other query options are already encoded in the link.",
@@ -46891,7 +48044,7 @@
         "tags": [
           "Identity > Administration > Groups"
         ],
-        "description": "Lists Entra ID groups for a tenant, including group members and owners. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.",
+        "description": "Lists Entra ID groups for a tenant, including group members and owners. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants. When manualPagination is also set on a cached read, one page is returned per request as { Results, Metadata } with a continuation token in Metadata.nextLink.",
         "parameters": [
           {
             "name": "expandMembers",
@@ -46929,6 +48082,15 @@
             }
           },
           {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request as { Results, Metadata } with a continuation token in Metadata.nextLink; cached reads only.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "members",
             "in": "query",
             "description": "Return the members of the group named by groupID instead of the group list. Requires groupID.",
@@ -46938,12 +48100,29 @@
             }
           },
           {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers. Stream the cached blobs as raw JSON so member arrays are never re-parsed here.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "owners",
             "in": "query",
             "description": "Return the owners of the group named by groupID instead of the group list. Requires groupID.",
             "required": false,
             "schema": {
               "type": "boolean"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
             }
           },
           {
@@ -47375,8 +48554,34 @@
         "tags": [
           "Identity > Administration > Users"
         ],
-        "description": "Lists all guest accounts in a tenant with a computed lifecycle status (Active, Pending Acceptance, Stale, Never Signed In or Disabled) based on the invitation state and sign-in activity. Supports UseReportDB=true to serve cached data from the reporting database; AllTenants always uses the cache.",
+        "description": "Lists all guest accounts in a tenant with a computed lifecycle status (Active, Pending Acceptance, Stale, Never Signed In or Disabled) based on the invitation state and sign-in activity. Supports UseReportDB=true to serve cached data from the reporting database; AllTenants always uses the cache. When manualPagination is set on a cached read, one page is returned per request as { Results, Metadata } with a continuation token in Metadata.nextLink.",
         "parameters": [
+          {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request as { Results, Metadata } with a continuation token in Metadata.nextLink; cached reads only.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
           {
             "name": "staleDays",
             "in": "query",
@@ -47784,6 +48989,9 @@
                     "type": "object",
                     "description": "Derived from the columns the CIPP UI renders. The response may carry more; these are the ones known to exist.",
                     "properties": {
+                      "accountEnabled": {
+                        "x-cipp-field-source": "frontend"
+                      },
                       "daysSinceLastSignIn": {
                         "x-cipp-field-source": "frontend"
                       },
@@ -47833,6 +49041,150 @@
           }
         ],
         "x-cipp-role": "Tenant.Directory.Read"
+      }
+    },
+    "/api/ListInstanceDiagnostics": {
+      "get": {
+        "summary": "ListInstanceDiagnostics",
+        "operationId": "ListInstanceDiagnostics",
+        "tags": [
+          "CIPP > Settings"
+        ],
+        "description": "Self diagnostics for this instance. Checks turns the recorded InstanceHealth samples\ninto a pass/warn/fail list with a suggested fix per finding; Timeline returns the raw\nbuckets plus the restart and out-of-memory events, with the API clients that were\nbusiest in the hour leading up to each event. Requires SuperAdmin access.",
+        "parameters": [
+          {
+            "name": "Action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Checks",
+                "Timeline"
+              ]
+            }
+          },
+          {
+            "name": "Hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields written into the storage table it reads. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "properties": {
+                      "BootTime": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Bucket": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ErrCount": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "ETag": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "GapMinutes": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "GcHeapLimitMb": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "HeapMb": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "HeapMbLive": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Kind": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "MaxLimiterWaitMs": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "OomCount": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PoolExhaustedCount": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PreviousSample": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "RowKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "StalledRunCount": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "TopEndpointsMs": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Version": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "WatchdogCount": {
+                        "type": "integer",
+                        "x-cipp-field-source": "storage"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "CIPP.SuperAdmin.Read",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/ListIntuneApprovalRequests": {
@@ -48390,8 +49742,8 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
-                        "x-cipp-field-source": "storage,backend"
+                      "Source": {
+                        "x-cipp-field-source": "storage,backend,frontend"
                       },
                       "templateCount": {
                         "x-cipp-field-source": "backend"
@@ -48696,6 +50048,145 @@
                       },
                       "tenantFilter": {
                         "x-cipp-field-source": "frontend"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "UpdatedBy": {
+                        "x-cipp-field-source": "storage"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.Role.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ListJITAllowedRoles": {
+      "get": {
+        "summary": "ListJITAllowedRoles",
+        "operationId": "ListJITAllowedRoles",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Returns the directory roles the calling user is permitted to assign via JIT Admin, based on the\nJIT Role Template(s) attached to their CIPP custom role(s). When the caller is unrestricted the\nfull role catalog is available (Restricted = false).",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.Role.Read",
+        "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ListJITRoleTemplates": {
+      "get": {
+        "summary": "ListJITRoleTemplates",
+        "operationId": "ListJITRoleTemplates",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Lists JIT Role Templates - named allow-lists of directory roles used to restrict which roles a\nCIPP custom role may assign via JIT Admin.",
+        "parameters": [
+          {
+            "name": "GUID",
+            "in": "query",
+            "description": "If a specific GUID is requested, filter to that template",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields written into the storage table it reads, and the columns the CIPP UI renders. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
+                    "properties": {
+                      "createdBy": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "createdDate": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "ETag": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "GUID": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "JSON": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Package": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Permissions": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "roles": {
+                        "x-cipp-field-source": "frontend"
+                      },
+                      "RowKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "SHA": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Source": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "templateName": {
+                        "x-cipp-field-source": "storage,frontend"
                       },
                       "Timestamp": {
                         "type": "string",
@@ -49085,7 +50576,7 @@
         "tags": [
           "CIPP > Core"
         ],
-        "description": "Lists CIPP platform audit logs with filtering by severity, date range, tenant, and user. Supports listing available log categories.",
+        "description": "Lists CIPP platform audit logs with filtering by severity, date range, tenant, and user. Supports listing available log categories, fetching a single entry, and server-side pagination via manualPagination/nextLink.",
         "parameters": [
           {
             "name": "API",
@@ -49112,6 +50603,15 @@
             }
           },
           {
+            "name": "Days",
+            "in": "query",
+            "description": "Days=N widens a filtered query to the last N calendar days (in the instance timezone), so the scoped drawers still show a run that finished last night. Ignored when dates are given.",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
             "name": "EndDate",
             "in": "query",
             "required": false,
@@ -49122,6 +50622,7 @@
           {
             "name": "Filter",
             "in": "query",
+            "description": "When true, the Severity/User/Tenant/API/StartDate/EndDate query filters are applied; otherwise the current day is returned unfiltered.",
             "required": false,
             "schema": {
               "type": "boolean"
@@ -49138,9 +50639,37 @@
           {
             "name": "logentryid",
             "in": "query",
+            "description": "Return single log entry by RowKey. RowKeys are either legacy GUIDs or the inverted-ticks format Write-LogMessage writes; both use only hex digits and hyphens.",
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request plus a continuation token in Metadata.nextLink, which the frontend passes back as nextLink to fetch the next page. Pages walk the requested date range newest-day-first and, within a day, in RowKey order (newest-first for entries written with the inverted-ticks RowKey scheme).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "Rows to return per page, clamped between 50 and 1000. Defaults to 400.",
+            "required": false,
+            "schema": {
+              "type": "integer"
             }
           },
           {
@@ -49388,8 +50917,43 @@
         "tags": [
           "Email-Exchange > Administration"
         ],
-        "description": "Lists Exchange Online mailboxes for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.",
+        "description": "Lists Exchange Online mailboxes for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants. When manualPagination is also set, one page is returned per request as { Results, Metadata } with a continuation token in Metadata.nextLink.",
         "parameters": [
+          {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request as { Results, Metadata } with a continuation token in Metadata.nextLink; cached reads only.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Minimal",
+            "in": "query",
+            "description": "Picker mode: address autocompletes only need the address + name, so skip the heavy field set, the per-mailbox computed properties, and the extra Get-OrganizationConfig call.",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
           {
             "$ref": "#/components/parameters/tenantFilter"
           },
@@ -50730,8 +52294,34 @@
         "tags": [
           "Identity > Reports"
         ],
-        "description": "Lists users and their MFA registration status for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.",
+        "description": "Lists users and their MFA registration status for a tenant. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants. When manualPagination is also set, one page is returned per request as { Results, Metadata } with a continuation token in Metadata.nextLink.",
         "parameters": [
+          {
+            "name": "manualPagination",
+            "in": "query",
+            "description": "Return one page per request as { Results, Metadata } with a continuation token in Metadata.nextLink; cached reads only.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nextLink",
+            "in": "query",
+            "description": "Continuation token from the previous page's Metadata.nextLink; opaque to callers.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
           {
             "$ref": "#/components/parameters/tenantFilter"
           },
@@ -51070,6 +52660,9 @@
                       "PsaTicketId": {
                         "x-cipp-field-source": "storage"
                       },
+                      "PsaTicketPriority": {
+                        "x-cipp-field-source": "storage"
+                      },
                       "Reference": {
                         "x-cipp-field-source": "storage"
                       },
@@ -51338,6 +52931,59 @@
           }
         ],
         "x-cipp-role": "Identity.AuditLog.Read"
+      }
+    },
+    "/api/ListOffboardingProgress": {
+      "get": {
+        "summary": "Get the live progress of an offboarding job",
+        "operationId": "ListOffboardingProgress",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Returns the progress rows of an offboarding job started from the wizard: one row per user with\nits overall status and the status and message of every step. Same rows as ListAsyncDeployment.\nThis is a read-only GET, so it carries a read role; an offboarding operator (who holds the\nbroader user write role) can still follow and re-run their jobs.",
+        "parameters": [
+          {
+            "name": "DeploymentId",
+            "in": "query",
+            "description": "The DeploymentId handed back by ExecOffboardUser, also stored on each offboarding task",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Not described statically: this endpoint returns the upstream response as-is, so its fields are determined by the upstream API rather than by CIPP. Call the endpoint to see the actual shape, or add a response schema in backend/Config/openapi-overrides."
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.User.Read",
+        "x-cipp-any-tenant": true
       }
     },
     "/api/ListOffboardTenants": {
@@ -53587,6 +55233,9 @@
                         "type": "string",
                         "x-cipp-field-source": "storage"
                       },
+                      "ExecutedTime": {
+                        "x-cipp-field-source": "storage"
+                      },
                       "Hidden": {
                         "type": "boolean",
                         "x-cipp-field-source": "storage"
@@ -53611,6 +55260,10 @@
                         "x-cipp-field-source": "storage"
                       },
                       "PsaTicketId": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PsaTicketPriority": {
                         "type": "string",
                         "x-cipp-field-source": "storage"
                       },
@@ -56341,6 +57994,64 @@
         "x-cipp-role": "Sharepoint.SiteRecycleBin.Read"
       }
     },
+    "/api/ListSiteRecycleBinSummary": {
+      "get": {
+        "summary": "ListSiteRecycleBinSummary",
+        "operationId": "ListSiteRecycleBinSummary",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Aggregate recycle bin sizes for a site (counts + bytes by stage). Never returns\nitem titles, leaf names, or paths — storage-report privacy ceiling.",
+        "parameters": [
+          {
+            "name": "MaxItems",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SiteUrl",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.SiteRecycleBin.Read"
+      }
+    },
     "/api/ListSiteRoleDefinitions": {
       "get": {
         "summary": "ListSiteRoleDefinitions",
@@ -56406,7 +58117,7 @@
         "tags": [
           "Teams-Sharepoint"
         ],
-        "description": "Lists SharePoint sites or OneDrive usage for a tenant. Requires a Type parameter (SharePointSiteUsage or OneDriveUsageAccount). Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.",
+        "description": "Lists SharePoint sites or OneDrive usage for a tenant. Requires a Type parameter (SharePointSiteUsage or OneDriveUsageAccount). SharePoint live data uses SPO admin RLD plus Graph enrichment; OneDrive live data uses Graph usage reports. Supports UseReportDB=true query parameter to retrieve cached data from the reporting database for significantly better performance, especially when querying AllTenants.",
         "parameters": [
           {
             "$ref": "#/components/parameters/tenantFilter"
@@ -56513,6 +58224,56 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
+      }
+    },
+    "/api/ListSiteStorageComposition": {
+      "get": {
+        "summary": "ListSiteStorageComposition",
+        "operationId": "ListSiteStorageComposition",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Site-level storage composition at library ceiling: tip / previous-version estimate /\nrecycle estimate from root web StorageMetrics + site StorageUsed. No file names.",
+        "parameters": [
+          {
+            "name": "SiteUrl",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
           }
         },
         "security": [
@@ -57245,7 +59006,7 @@
                       "SHA": {
                         "x-cipp-field-source": "storage"
                       },
-                      "source": {
+                      "Source": {
                         "x-cipp-field-source": "storage"
                       },
                       "standards": {
@@ -57293,6 +59054,78 @@
         ],
         "x-cipp-role": "Tenant.Standards.Read",
         "x-cipp-any-tenant": true
+      }
+    },
+    "/api/ListStorageCleanupScan": {
+      "get": {
+        "summary": "ListStorageCleanupScan",
+        "operationId": "ListStorageCleanupScan",
+        "tags": [
+          "Teams-Sharepoint"
+        ],
+        "description": "Reads the hold-only StorageCleanupScan CIPPDB cache and rebuilds the scans map expected by\nthe storage report cleanup opportunity helpers. No live enumeration — refresh via\nExecCIPPDBCache Name=StorageCleanupScan. Report-private; not used by other List APIs.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                    "properties": {
+                      "cleanupSynced": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "lastDataRefresh": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "librariesScanned": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "scans": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "sitesScanned": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "sitesSkipped": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "sitesWithRecycle": {
+                        "x-cipp-field-source": "backend"
+                      },
+                      "summary": {
+                        "x-cipp-field-source": "backend"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Sharepoint.Site.Read"
       }
     },
     "/api/ListTeams": {
@@ -58680,6 +60513,9 @@
                         "type": "string",
                         "x-cipp-field-source": "storage"
                       },
+                      "StandardsExcludeAllTenants": {
+                        "x-cipp-field-source": "storage"
+                      },
                       "Status": {
                         "x-cipp-field-source": "storage,frontend"
                       },
@@ -58907,6 +60743,7 @@
           {
             "name": "category",
             "in": "query",
+            "description": "Restrict to a single category (the framework/area name a test belongs to).",
             "required": false,
             "schema": {
               "type": "string"
@@ -58915,6 +60752,7 @@
           {
             "name": "countsOnly",
             "in": "query",
+            "description": "'true' to return only the aggregate counts with no rows. Implies includeCounts.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58923,6 +60761,7 @@
           {
             "name": "includeCounts",
             "in": "query",
+            "description": "'true' to also return aggregate counts (per status, high-risk failures, distinct tenants).",
             "required": false,
             "schema": {
               "type": "string"
@@ -58931,6 +60770,7 @@
           {
             "name": "risk",
             "in": "query",
+            "description": "Restrict to a single risk level: High, Medium or Low.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58939,6 +60779,7 @@
           {
             "name": "rowStatus",
             "in": "query",
+            "description": "Return rows only for these statuses, while still counting every status the filters match.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58947,6 +60788,7 @@
           {
             "name": "status",
             "in": "query",
+            "description": "Narrow the scan to these statuses: Passed, Failed, Investigate, Skipped, Informational.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58955,6 +60797,7 @@
           {
             "name": "summaryOnly",
             "in": "query",
+            "description": "'true' to project away the large ResultMarkdown/ResultDataJson blobs for a lighter read.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58963,6 +60806,7 @@
           {
             "name": "tenantFilter",
             "in": "query",
+            "description": "One or more tenant domains to report on. Omit, or pass 'AllTenants', to query every tenant the caller may see. Accepts a string, a comma-delimited string, or an array.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58971,6 +60815,7 @@
           {
             "name": "testId",
             "in": "query",
+            "description": "One or more test IDs (the result row's RowKey), e.g. 'CustomScript-<guid>'.",
             "required": false,
             "schema": {
               "type": "string"
@@ -58979,6 +60824,7 @@
           {
             "name": "testType",
             "in": "query",
+            "description": "Restrict to a single test type: Identity, Devices or Custom.",
             "required": false,
             "schema": {
               "type": "string"
@@ -59603,7 +61449,7 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "description": "Derived from the fields the endpoint selects onto each record. The response may carry more; these are the ones known to exist.",
+                    "description": "Derived from the fields written into the storage table it reads, and the fields the endpoint selects onto each record. Fields taken from the storage writers may be omitted by this endpoint, and the response may carry computed fields not listed here.",
                     "properties": {
                       "AdditionalEmailAddresses": {
                         "x-cipp-field-source": "backend"
@@ -59614,11 +61460,18 @@
                       "ComplianceTagHoldApplied": {
                         "x-cipp-field-source": "backend"
                       },
+                      "Data": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
                       "DeliverToMailboxAndForward": {
                         "x-cipp-field-source": "backend"
                       },
                       "displayName": {
                         "x-cipp-field-source": "backend"
+                      },
+                      "ETag": {
+                        "x-cipp-field-source": "storage"
                       },
                       "ExchangeGuid": {
                         "x-cipp-field-source": "backend"
@@ -59662,6 +61515,9 @@
                       "MessageCopyForSentAsEnabled": {
                         "x-cipp-field-source": "backend"
                       },
+                      "PartitionKey": {
+                        "x-cipp-field-source": "storage"
+                      },
                       "primarySmtpAddress": {
                         "x-cipp-field-source": "backend"
                       },
@@ -59673,6 +61529,16 @@
                       },
                       "RetentionHoldEnabled": {
                         "x-cipp-field-source": "backend"
+                      },
+                      "RowKey": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Timestamp": {
+                        "type": "string",
+                        "x-cipp-field-source": "storage"
+                      },
+                      "Type": {
+                        "x-cipp-field-source": "storage"
                       },
                       "UPN": {
                         "x-cipp-field-source": "backend"
@@ -59761,6 +61627,429 @@
           }
         ],
         "x-cipp-role": "Exchange.Mailbox.Read"
+      }
+    },
+    "/api/ListUserOneDriveShortcuts": {
+      "get": {
+        "summary": "ListUserOneDriveShortcuts",
+        "operationId": "ListUserOneDriveShortcuts",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Lists OneDrive remoteItem shortcuts for a user from the drive root and the Shortcuts folder.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/tenantFilter"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userPrincipalName",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "description": "Derived from the Microsoft Graph entity it queries. This endpoint returns the Graph response as-is without selecting fields, so these are the properties the entity CAN carry (x-cipp-field-source: graph-entity) rather than a proven projection - Graph returns a default subset unless asked otherwise.",
+                    "properties": {
+                      "aboutMe": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "accountEnabled": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "ageGroup": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "assignedLicenses": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "assignedPlans": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "authorizationInfo": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "birthday": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "businessPhones": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "city": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "cloudLicensing": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "cloudRealtimeCommunicationInfo": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "companyName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "consentProvidedForMinor": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "country": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "createdDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "creationType": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "customSecurityAttributes": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "deletedDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "department": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "deviceEnrollmentLimit": {
+                        "type": "integer",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "deviceKeys": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "displayName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "employeeHireDate": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "employeeId": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "employeeLeaveDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "employeeOrgData": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "employeeType": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "externalUserState": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "externalUserStateChangeDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "faxNumber": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "givenName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "hireDate": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "id": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "identities": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "identityGovernance": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "identityParentId": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "imAddresses": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "infoCatalogs": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "interests": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "isLicenseReconciliationNeeded": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "isManagementRestricted": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "isResourceAccount": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "jobTitle": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "lastPasswordChangeDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "legalAgeGroupClassification": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "licenseAssignmentStates": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "mail": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "mailboxSettings": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "mailNickname": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "mobilePhone": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "mySite": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "officeLocation": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesDistinguishedName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesDomainName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesExtensionAttributes": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesImmutableId": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesLastSyncDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesProvisioningErrors": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesSamAccountName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesSecurityIdentifier": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesSipInfo": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesSyncEnabled": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "onPremisesUserPrincipalName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "otherMails": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "passwordPolicies": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "passwordProfile": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "pastProjects": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "postalCode": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "preferredDataLocation": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "preferredLanguage": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "preferredName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "print": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "provisionedPlans": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "proxyAddresses": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "refreshTokensValidFromDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "responsibilities": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "schools": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "securityIdentifier": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "serviceProvisioningErrors": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "showInAddressList": {
+                        "type": "boolean",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "signInActivity": {
+                        "type": "object",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "signInSessionsValidFromDateTime": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "skills": {
+                        "type": "array",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "state": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "streetAddress": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "surname": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "usageLocation": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "userPrincipalName": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      },
+                      "userType": {
+                        "type": "string",
+                        "x-cipp-field-source": "graph-entity"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - missing required field or invalid input"
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.User.Read"
       }
     },
     "/api/ListUserPhoto": {
@@ -61385,6 +63674,9 @@
                         "x-cipp-field-source": "storage"
                       },
                       "PsaTicketId": {
+                        "x-cipp-field-source": "storage"
+                      },
+                      "PsaTicketPriority": {
                         "x-cipp-field-source": "storage"
                       },
                       "Reference": {
@@ -63805,6 +66097,71 @@
         "x-cipp-role": "Identity.Role.ReadWrite"
       }
     },
+    "/api/RemoveJITRoleTemplate": {
+      "post": {
+        "summary": "RemoveJITRoleTemplate",
+        "operationId": "RemoveJITRoleTemplate",
+        "tags": [
+          "Identity > Administration > Users"
+        ],
+        "description": "Deletes a JIT Role Template.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ID": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "ID",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardResults"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - invalid or missing bearer token"
+          },
+          "403": {
+            "description": "Forbidden - caller lacks the required RBAC role"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-cipp-role": "Identity.Role.ReadWrite"
+      }
+    },
     "/api/RemovePIMRoleSettingsTemplate": {
       "post": {
         "summary": "Delete a PIM role settings template.",
@@ -65038,12 +67395,20 @@
           "Tenant > Administration > Tenant"
         ],
         "requestBody": {
-          "required": false,
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {}
+                "properties": {
+                  "defaultDomainName": {
+                    "type": "string",
+                    "description": "Get the tenant identifier from the request body (POST) or query (legacy GET)."
+                  }
+                },
+                "required": [
+                  "defaultDomainName"
+                ]
               }
             }
           }
@@ -65052,8 +67417,8 @@
           {
             "name": "defaultDomainName",
             "in": "query",
-            "description": "Get the tenant identifier from query parameters",
-            "required": true,
+            "description": "Get the tenant identifier from the request body (POST) or query (legacy GET).",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -65522,6 +67887,9 @@
                       "x-cipp-field-source": "storage"
                     },
                     "PsaTicketId": {
+                      "x-cipp-field-source": "storage"
+                    },
+                    "PsaTicketPriority": {
                       "x-cipp-field-source": "storage"
                     },
                     "Reference": {

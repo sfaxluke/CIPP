@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, memo } from 'react'
+import { CippIcons } from '../../utils/icon-registry'
 import {
   Alert,
   Box,
@@ -29,13 +30,6 @@ import {
   Typography,
 } from '@mui/material'
 import { Grid } from '@mui/system'
-import {
-  CloudDownload,
-  Search,
-  ViewList,
-  ViewModule,
-  Visibility,
-} from '@mui/icons-material'
 import { Virtuoso } from 'react-virtuoso'
 import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { CippApiResults } from './CippApiResults'
@@ -73,10 +67,7 @@ export const templateTypeLabels = {
 
 export const getTemplateTypeLabel = (type) => {
   if (!type) return 'Other'
-  return (
-    templateTypeLabels[type] ??
-    type.replace(/Template$/, '').replace(/([a-z])([A-Z])/g, '$1 $2')
-  )
+  return (templateTypeLabels[type] ?? type.replace(/Template$/, '').replace(/([a-z])([A-Z])/g, '$1 $2'));
 }
 
 const jsonViewTypeForTemplate = (type) => {
@@ -159,7 +150,9 @@ const TemplateCard = memo(
             }}
           >
             <CardContent sx={{ flexGrow: 1, pt: 2.5, pb: 1 }}>
-              <Stack direction="row" alignItems="flex-start" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{
+                alignItems: "flex-start"
+              }}>
                 <Typography
                   variant="subtitle1"
                   sx={{
@@ -195,10 +188,12 @@ const TemplateCard = memo(
               )}
               <Typography
                 variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block', mt: 1.5 }}
                 noWrap
-              >
+                sx={{
+                  color: "text.secondary",
+                  display: 'block',
+                  mt: 1.5
+                }}>
                 Repository:{' '}
                 <Link
                   href={`https://github.com/${item.Repository}`}
@@ -213,7 +208,7 @@ const TemplateCard = memo(
             <CardActions sx={{ justifyContent: 'flex-end', px: 2, py: 1 }}>
               <Button
                 size="small"
-                startIcon={<Visibility />}
+                startIcon={<CippIcons.EyeIcon />}
                 onClick={() => onPreview(item)}
               >
                 Preview
@@ -221,7 +216,7 @@ const TemplateCard = memo(
               <Button
                 size="small"
                 variant="contained"
-                startIcon={<CloudDownload />}
+                startIcon={<CippIcons.CloudDownload />}
                 onClick={() => onImport(item)}
                 disabled={isImporting}
               >
@@ -231,7 +226,7 @@ const TemplateCard = memo(
           </Card>
         </Box>
       </Grid>
-    )
+    );
   },
   (prev, next) =>
     prev.item === next.item &&
@@ -366,7 +361,9 @@ const CompactTemplateList = memo(
                   </Box>
                 }
                 secondary={
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     Repository:{' '}
                     <Link
                       href={`https://github.com/${item.Repository}`}
@@ -398,10 +395,10 @@ const CompactTemplateList = memo(
                 </Stack>
               </ListItemSecondaryAction>
             </ListItem>
-          )
+          );
         })}
       </List>
-    )
+    );
   }
 )
 
@@ -654,10 +651,12 @@ export const CippTemplateCatalog = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               autoComplete="off"
               placeholder="Search by name, category, or repository..."
-              InputProps={{
-                startAdornment: (
-                  <Search sx={{ mr: 1, color: 'text.secondary' }} />
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <CippIcons.Search sx={{ mr: 1, color: 'text.secondary' }} />
+                  ),
+                }
               }}
             />
           </Grid>
@@ -726,11 +725,12 @@ export const CippTemplateCatalog = ({
         <Stack
           direction="row"
           spacing={2}
-          alignItems="center"
-          flexWrap="wrap"
           useFlexGap
-          sx={{ mb: 2 }}
-        >
+          sx={{
+            alignItems: "center",
+            flexWrap: "wrap",
+            mb: 2
+          }}>
           <ToggleButtonGroup
             value={viewMode}
             exclusive
@@ -740,10 +740,10 @@ export const CippTemplateCatalog = ({
             }}
           >
             <ToggleButton value="card" aria-label="card view">
-              <ViewModule fontSize="small" />
+              <CippIcons.ViewModule fontSize="small" />
             </ToggleButton>
             <ToggleButton value="list" aria-label="list view">
-              <ViewList fontSize="small" />
+              <CippIcons.ViewList fontSize="small" />
             </ToggleButton>
           </ToggleButtonGroup>
 
@@ -793,7 +793,7 @@ export const CippTemplateCatalog = ({
               importMutation.isPending ? (
                 <CircularProgress size={16} />
               ) : (
-                <CloudDownload />
+                <CippIcons.CloudDownload />
               )
             }
             onClick={handleImportSelected}
@@ -803,9 +803,10 @@ export const CippTemplateCatalog = ({
           </Button>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ ml: 'auto' }}
-          >
+            sx={{
+              color: "text.secondary",
+              ml: 'auto'
+            }}>
             Showing {filteredItems.length} of {allItems.length} templates
           </Typography>
         </Stack>
@@ -886,7 +887,7 @@ export const CippTemplateCatalog = ({
         <DialogActions>
           <Button
             variant="contained"
-            startIcon={<CloudDownload />}
+            startIcon={<CippIcons.CloudDownload />}
             onClick={() => {
               importItems([previewItem])
               setPreviewItem(null)
@@ -901,5 +902,5 @@ export const CippTemplateCatalog = ({
         </DialogActions>
       </Dialog>
     </Box>
-  )
+  );
 }

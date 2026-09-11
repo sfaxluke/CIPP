@@ -315,14 +315,23 @@ export const CippApiDialog = (props) => {
       !linkOpenedRef.current
     ) {
       linkOpenedRef.current = true
-      const linkWithData = api.link.replace(
-        /\[([^\]]+)\]/g,
-        (_, key) => getRawNestedValue(row, key) || `[${key}]`
-      )
-      if (linkWithData.startsWith('/') && !api?.external) {
-        router.push(linkWithData, undefined, { shallow: true })
+      const placeholder = /\[([^\]]+)\]/g
+      const hasValue = (value) => value !== undefined && value !== null && value !== ''
+      if (api.link.startsWith('/') && !api?.external) {
+        // Internal routes only ever substitute ids and query values, so encode them: the row
+        // is tenant data and must not be able to inject path segments or a second origin.
+        const internalLink = api.link.replace(placeholder, (_, key) => {
+          const value = getRawNestedValue(row, key)
+          return hasValue(value) ? encodeURIComponent(String(value)) : `[${key}]`
+        })
+        router.push(internalLink, undefined, { shallow: true })
       } else {
-        window.open(linkWithData, api.target || '_blank')
+        // External links may substitute a whole URL (e.g. [webUrl]) and are left as-is.
+        const externalLink = api.link.replace(placeholder, (_, key) => {
+          const value = getRawNestedValue(row, key)
+          return hasValue(value) ? value : `[${key}]`
+        })
+        window.open(externalLink, api.target || '_blank')
       }
       createDialog.handleClose()
     }
@@ -372,9 +381,9 @@ export const CippApiDialog = (props) => {
             : element.replace(
                 /\[([^\]]+)\]/g,
                 (_, key) => getNestedValue(row[0], key) || `[${key}]`
-              )
+              );
         }
-        return element.replace(/\[([^\]]+)\]/g, (_, key) => getNestedValue(row, key) || `[${key}]`)
+        return element.replace(/\[([^\]]+)\]/g, (_, key) => getNestedValue(row, key) || `[${key}]`);
       }
       if (React.isValidElement(element)) {
         const newChildren = React.Children.map(element.props.children, replaceTextInElement)

@@ -126,6 +126,9 @@ function Send-CIPPScheduledTaskAlert {
         }
     }
 
+    # One outcome per delivery attempt (Channel, Result), returned so the caller can keep it with the task.
+    $Outcomes = [System.Collections.Generic.List[object]]::new()
+
     try {
         Write-Information "Sending post-execution alerts for task $($TaskInfo.Name)"
 
@@ -247,6 +250,12 @@ function Send-CIPPScheduledTaskAlert {
             '*psa*' {
                 $PsaSplitSent = $false
                 $TaskAffectedUser = $null
+                # Per-task PSA ticket priority (configured on the alert) overrides the global
+                # HaloPSA.DefaultPriority. Empty on tasks saved before this field existed, in which
+                # case New-HaloPSATicket falls back to the integration default. Read here rather
+                # than inside the try so the consolidated fallback path below can use it even when
+                # the affected-user resolution throws.
+                $TaskPsaPriority = $TaskInfo.PsaTicketPriority
                 # A task can name the ticket the work came from, either explicitly (PsaTicketId, set
                 # from the ticket box on the wizards) or inside its free-text reference. Both travel
                 # with the alert so a PSA that recognises them can add the result to that ticket
@@ -343,7 +352,8 @@ function Send-CIPPScheduledTaskAlert {
                                         # task-level affected user if one was resolved.
                                         $GroupParams = @{ Type = 'psa'; Title = $title; HTMLContent = $GroupHTML; TenantFilter = $TenantFilter; PSAReference = $PsaReference; PSATicketId = $PsaTicketId }
                                         if ($TaskAffectedUser) { $GroupParams.AffectedUser = $TaskAffectedUser }
-                                        Send-CIPPAlert @GroupParams
+                                        if ($TaskPsaPriority) { $GroupParams.PsaTicketPriority = $TaskPsaPriority }
+                                        $Outcomes.Add([pscustomobject]@{ Channel = 'PSA'; Result = [string]((Send-CIPPAlert @GroupParams) -join ' ') })
                                     } else {
                                         $GroupDisplayName = if ($DisplayField) { $Group.Group[0].$DisplayField } else { $null }
                                         $UserLabel = if ($GroupDisplayName) { "$GroupDisplayName ($GroupKey)" } else { $GroupKey }
@@ -352,7 +362,9 @@ function Send-CIPPScheduledTaskAlert {
                                             UPN         = $GroupKey
                                             DisplayName = $GroupDisplayName
                                         }
-                                        Send-CIPPAlert -Type 'psa' -Title $UserTitle -HTMLContent $GroupHTML -TenantFilter $TenantFilter -AffectedUser $AffectedUser -PSAReference $PsaReference -PSATicketId $PsaTicketId
+                                        $UserParams = @{ Type = 'psa'; Title = $UserTitle; HTMLContent = $GroupHTML; TenantFilter = $TenantFilter; AffectedUser = $AffectedUser; PSAReference = $PsaReference; PSATicketId = $PsaTicketId }
+                                        if ($TaskPsaPriority) { $UserParams.PsaTicketPriority = $TaskPsaPriority }
+                                        $Outcomes.Add([pscustomobject]@{ Channel = 'PSA'; Result = [string]((Send-CIPPAlert @UserParams) -join ' ') })
                                     }
                                 }
                                 $PsaSplitSent = $true
@@ -366,7 +378,8 @@ function Send-CIPPScheduledTaskAlert {
                 if (-not $PsaSplitSent) {
                     $PsaParams = @{ Type = 'psa'; Title = $title; HTMLContent = (ConvertTo-PSAHtml -Html $HTML); TenantFilter = $TenantFilter; PSAReference = $PsaReference; PSATicketId = $PsaTicketId }
                     if ($TaskAffectedUser) { $PsaParams.AffectedUser = $TaskAffectedUser }
-                    Send-CIPPAlert @PsaParams
+                    if ($TaskPsaPriority) { $PsaParams.PsaTicketPriority = $TaskPsaPriority }
+                    $Outcomes.Add([pscustomobject]@{ Channel = 'PSA'; Result = [string]((Send-CIPPAlert @PsaParams) -join ' ') })
                 }
             }
             '*email*' {
@@ -383,7 +396,7 @@ function Send-CIPPScheduledTaskAlert {
                 if ($TaskAttachments) {
                     $EmailParams.Attachments = $TaskAttachments
                 }
-                Send-CIPPAlert @EmailParams
+                $Outcomes.Add([pscustomobject]@{ Channel = 'Email'; Result = [string]((Send-CIPPAlert @EmailParams) -join ' ') })
             }
             '*webhook*' {
                 # Build per-item snooze metadata for alert tasks
@@ -441,7 +454,7 @@ function Send-CIPPScheduledTaskAlert {
                     if ($SnoozeInfo) { $obj | Add-Member -NotePropertyName 'Snooze' -NotePropertyValue $SnoozeInfo }
                     $obj
                 }
-                Send-CIPPAlert -Type 'webhook' -Title $title -TenantFilter $TenantFilter -JSONContent $($Webhook | ConvertTo-Json -Depth 20) -APIName 'Scheduled Task Alerts' -SchemaSource $TaskType -InvokingCommand $TaskInfo.Command -UseStandardizedSchema:$UseStandardizedSchema
+                $Outcomes.Add([pscustomobject]@{ Channel = 'Webhook'; Result = [string]((Send-CIPPAlert -Type 'webhook' -Title $title -TenantFilter $TenantFilter -JSONContent $($Webhook | ConvertTo-Json -Depth 20) -APIName 'Scheduled Task Alerts' -SchemaSource $TaskType -InvokingCommand $TaskInfo.Command -UseStandardizedSchema:$UseStandardizedSchema) -join ' ') })
             }
         }
 
@@ -450,5 +463,7 @@ function Send-CIPPScheduledTaskAlert {
     } catch {
         Write-Warning "Failed to send scheduled task alerts: $($_.Exception.Message)"
         Write-LogMessage -API 'Scheduler_Alerts' -tenant $TenantFilter -message "Failed to send alerts for task $($TaskInfo.Name): $($_.Exception.Message)" -sev Error
+        $Outcomes.Add([pscustomobject]@{ Channel = 'All'; Result = "Error: $($_.Exception.Message)" })
     }
+    return @($Outcomes)
 }

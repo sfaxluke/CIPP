@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
+import { CippIcons } from '../../utils/icon-registry'
 import { Avatar, Box, Card, Chip, Divider, Skeleton, Typography } from '@mui/material'
-import { AccessTime } from '@mui/icons-material'
 import { ApiGetCallWithPagination } from '../../api/ApiCall'
 import { useSettings } from '../../hooks/use-settings'
 import { parseCippDate } from '../../utils/parse-cipp-date'
@@ -165,11 +165,13 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
             flexShrink: 0,
           }}
         >
-          <AccessTime sx={{ fontSize: { xs: 20, md: 22 }, color: 'inherit' }} />
+          <CippIcons.AccessTime sx={{ fontSize: { xs: 20, md: 22 }, color: 'inherit' }} />
         </Avatar>
 
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="caption" color="text.secondary" noWrap>
+          <Typography variant="caption" noWrap sx={{
+            color: "text.secondary"
+          }}>
             Next scheduler run
           </Typography>
           {/* The countdown is the point of the tile; the due time is a qualifier on it, so it
@@ -187,10 +189,11 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
             </Typography>
             <Typography
               variant="body2"
-              color="text.secondary"
               noWrap
-              sx={{ fontVariantNumeric: 'tabular-nums' }}
-            >
+              sx={{
+                color: "text.secondary",
+                fontVariantNumeric: 'tabular-nums'
+              }}>
               due at {nextRun.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
             </Typography>
           </Box>
@@ -226,15 +229,17 @@ export const CippSchedulerCountdown = ({ apiUrl, queryKey }) => {
 
         <Typography
           variant="caption"
-          color="text.secondary"
-          sx={{ flex: '1 1 260px', minWidth: 0 }}
-        >
+          sx={{
+            color: "text.secondary",
+            flex: '1 1 260px',
+            minWidth: 0
+          }}>
           Scheduled tasks are picked up every {SCHEDULER_INTERVAL_MINUTES} minutes. A task whose
           scheduled time has passed stays Planned until the next run.
         </Typography>
       </Box>
     </Card>
-  )
+  );
 }
 
 export default CippSchedulerCountdown

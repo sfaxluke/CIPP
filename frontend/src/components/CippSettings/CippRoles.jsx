@@ -1,8 +1,8 @@
 import React from "react";
+import { CippIcons } from "../../utils/icon-registry";
 import { Alert, Box, Button, Chip, SvgIcon, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { CippDataTable } from "../CippTable/CippDataTable";
-import { PencilIcon, TrashIcon, DocumentDuplicateIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { usePermissions } from "../../hooks/use-permissions";
 import { enterImpersonation } from "../../utils/impersonation";
 import NextLink from "next/link";
@@ -26,7 +26,7 @@ const CippRoles = () => {
             label: "Impersonate Role",
             icon: (
               <SvgIcon>
-                <EyeIcon />
+                <CippIcons.EyeIcon />
               </SvgIcon>
             ),
             confirmText: (
@@ -60,7 +60,7 @@ const CippRoles = () => {
       pinned: true,
       icon: (
         <SvgIcon>
-          <PencilIcon />
+          <CippIcons.PencilIcon />
         </SvgIcon>
       ),
       link: "/cipp/advanced/authentication/cipp-roles/edit?role=[RoleName]",
@@ -69,7 +69,7 @@ const CippRoles = () => {
       label: "Clone",
       icon: (
         <SvgIcon>
-          <DocumentDuplicateIcon />
+          <CippIcons.DocumentDuplicateIcon />
         </SvgIcon>
       ),
       type: "POST",
@@ -97,7 +97,7 @@ const CippRoles = () => {
       label: "Delete",
       icon: (
         <SvgIcon>
-          <TrashIcon />
+          <CippIcons.TrashIcon />
         </SvgIcon>
       ),
       confirmText: "Are you sure you want to delete this custom role?",
@@ -132,7 +132,9 @@ const CippRoles = () => {
         properties.push({
           label: "Permission Rules",
           value: (
-            <Stack direction="row" spacing={0.5} useFlexGap flexWrap="wrap">
+            <Stack direction="row" spacing={0.5} useFlexGap sx={{
+              flexWrap: "wrap"
+            }}>
               {rules.Include.map((pattern, idx) => (
                 <Chip key={`inc-${idx}`} size="small" color="success" label={pattern} />
               ))}
@@ -183,7 +185,7 @@ const CippRoles = () => {
             size="small"
             startIcon={
               <SvgIcon>
-                <PencilIcon />
+                <CippIcons.PencilIcon />
               </SvgIcon>
             }
             component={NextLink}

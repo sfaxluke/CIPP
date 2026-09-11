@@ -19,23 +19,13 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
+import { CippIcons } from '../../../utils/icon-registry'
 import { Grid } from '@mui/system'
-import {
-  Add,
-  CheckCircle,
-  ContentCopy,
-  Delete,
-  ExpandMore,
-  PlayArrow,
-  RadioButtonUnchecked,
-  SaveRounded,
-} from '@mui/icons-material'
-import ArrowLeftIcon from '@mui/icons-material/ArrowLeft'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useRouter } from 'next/router'
 import { get } from 'lodash'
-import { Layout as DashboardLayout } from '../../../layouts/index.js'
+import { Layout as DashboardLayout } from '../../../layouts/index'
 import { CippHead } from '../../../components/CippComponents/CippHead'
 import CippButtonCard from '../../../components/CippCards/CippButtonCard'
 import { CippPropertyListCard } from '../../../components/CippCards/CippPropertyListCard'
@@ -43,7 +33,7 @@ import CippFormComponent from '../../../components/CippComponents/CippFormCompon
 import { CippFormTenantSelector } from '../../../components/CippComponents/CippFormTenantSelector'
 import CippBaselineStandardItem from '../../../components/CippBaselines/CippBaselineStandardItem'
 import CippBaselineStandardDialog from '../../../components/CippBaselines/CippBaselineStandardDialog'
-import { PermissionButton } from '../../../utils/permissions.js'
+import { PermissionButton } from '../../../utils/permissions'
 import { ApiGetCall, ApiPostCall } from '../../../api/ApiCall'
 import { parseCippDate } from '../../../utils/parse-cipp-date'
 import { CippApiResults } from '../../../components/CippComponents/CippApiResults'
@@ -287,7 +277,9 @@ const StagePanel = ({
   return (
     <Box hidden={hidden}>
       <Stack spacing={2}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{
+          alignItems: "center"
+        }}>
           <TextField
             label="Stage Name"
             size="small"
@@ -320,7 +312,7 @@ const StagePanel = ({
                 onClick={() => onRemoveStage(stageIndex)}
                 color="error"
               >
-                <Delete />
+                <CippIcons.Delete />
               </IconButton>
             </Tooltip>
           )}
@@ -336,7 +328,9 @@ const StagePanel = ({
             <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
               Graduation conditions
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               A tenant advances from Stage {stageIndex} into this stage once
               the conditions below are met. Earlier stages keep applying; if
               the same standard is configured in both, this stage's settings
@@ -373,7 +367,9 @@ const StagePanel = ({
                       <Stack
                         direction="row"
                         spacing={2}
-                        alignItems="flex-start"
+                        sx={{
+                          alignItems: "flex-start"
+                        }}
                       >
                         <Box sx={{ flexGrow: 1 }}>
                           <CippFormComponent
@@ -391,7 +387,7 @@ const StagePanel = ({
                             size="small"
                             onClick={() => handleRemoveCondition(conditionId)}
                           >
-                            <Delete fontSize="small" />
+                            <CippIcons.Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </Stack>
@@ -472,13 +468,17 @@ const StagePanel = ({
                         </Box>
                       )}
                       {conditionType === 'success' && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>
                           Advances when every standard from the previous stages
                           reports Compliant for the tenant.
                         </Typography>
                       )}
                       {conditionType === 'manual' && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" sx={{
+                          color: "text.secondary"
+                        }}>
                           An operator advances the tenant from the Alignment
                           page.
                         </Typography>
@@ -486,13 +486,13 @@ const StagePanel = ({
                     </Stack>
                   </CardContent>
                 </Card>
-              )
+              );
             })}
             <Box>
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={<Add />}
+                startIcon={<CippIcons.Add />}
                 onClick={handleAddCondition}
               >
                 Add Condition
@@ -502,13 +502,15 @@ const StagePanel = ({
         )}
 
         <Divider />
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{
+          alignItems: "center"
+        }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, flexGrow: 1 }}>
             Standards in this stage ({stageStandards.length})
           </Typography>
           <Button
             variant="outlined"
-            endIcon={<ExpandMore />}
+            endIcon={<CippIcons.ExpandMore />}
             disabled={stageStandards.length === 0}
             onClick={(event) => setBulkAnchor(event.currentTarget)}
           >
@@ -533,14 +535,16 @@ const StagePanel = ({
           </Menu>
           <Button
             variant="outlined"
-            startIcon={<Add />}
+            startIcon={<CippIcons.Add />}
             onClick={() => onOpenDialog(stageIndex)}
           >
             Add Standards
           </Button>
         </Stack>
         {stageStandards.length === 0 && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             No standards in this stage yet. Use Add Standards to browse the
             catalog.
           </Typography>
@@ -565,7 +569,7 @@ const StagePanel = ({
         </Stack>
       </Stack>
     </Box>
-  )
+  );
 }
 
 const Page = () => {
@@ -920,7 +924,7 @@ const Page = () => {
             onClick={() => router.back()}
             startIcon={
               <SvgIcon fontSize="small">
-                <ArrowLeftIcon />
+                <CippIcons.ArrowLeft />
               </SvgIcon>
             }
           >
@@ -929,11 +933,12 @@ const Page = () => {
         </Box>
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          alignItems={{ xs: 'stretch', sm: 'center' }}
           spacing={{ xs: 2, sm: 4 }}
-          sx={{ mb: 1 }}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: 'stretch', sm: 'center' },
+            mb: 1
+          }}>
           <Typography variant="h4">{pageTitle}</Typography>
           <Stack
             direction="row"
@@ -945,7 +950,7 @@ const Page = () => {
               requiredPermissions={['Tenant.Standards.ReadWrite']}
               variant="contained"
               color="primary"
-              startIcon={<SaveRounded />}
+              startIcon={<CippIcons.SaveRounded />}
               disabled={isSaveDisabled}
               onClick={handleSave}
             >
@@ -954,8 +959,8 @@ const Page = () => {
             <Button
               variant="outlined"
               color="primary"
-              startIcon={<Add />}
-              endIcon={<ExpandMore />}
+              startIcon={<CippIcons.Add />}
+              endIcon={<CippIcons.ExpandMore />}
               onClick={(event) => setAddStageAnchor(event.currentTarget)}
             >
               Add Stage
@@ -972,7 +977,7 @@ const Page = () => {
                 }}
               >
                 <ListItemIcon>
-                  <Add fontSize="small" />
+                  <CippIcons.Add fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Add empty stage</ListItemText>
               </MenuItem>
@@ -983,7 +988,7 @@ const Page = () => {
                 }}
               >
                 <ListItemIcon>
-                  <ContentCopy fontSize="small" />
+                  <CippIcons.ContentCopy fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>
                   Copy currently selected stage ({stages[activeStage]?.name})
@@ -1001,7 +1006,7 @@ const Page = () => {
               <Button
                 color="inherit"
                 size="small"
-                startIcon={<PlayArrow />}
+                startIcon={<CippIcons.PlayArrow />}
                 disabled={runAfterSave.isPending}
                 onClick={() =>
                   runAfterSave.mutate({
@@ -1065,7 +1070,9 @@ const Page = () => {
                     label="Disable Scheduled Runs"
                     formControl={formControl}
                   />
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     With scheduled runs disabled, this baseline only executes
                     when you run it yourself - drift is not detected or
                     remediated in between.
@@ -1086,7 +1093,9 @@ const Page = () => {
                     label="Custom webhook URL"
                     formControl={formControl}
                   />
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{
+                    color: "text.secondary"
+                  }}>
                     Alerts follow each standard's alert settings. Leave these
                     empty to deliver through the global CIPP notification
                     settings (email, webhook, and PSA).
@@ -1100,12 +1109,14 @@ const Page = () => {
                       key={step.label}
                       direction="row"
                       spacing={1}
-                      alignItems="center"
+                      sx={{
+                        alignItems: "center"
+                      }}
                     >
                       {step.done ? (
-                        <CheckCircle fontSize="small" color="success" />
+                        <CippIcons.CheckCircle fontSize="small" color="success" />
                       ) : (
-                        <RadioButtonUnchecked
+                        <CippIcons.RadioButtonUnchecked
                           fontSize="small"
                           color="disabled"
                         />
@@ -1194,7 +1205,7 @@ const Page = () => {
         onToggle={handleToggleStandard}
       />
     </Box>
-  )
+  );
 }
 
 Page.getLayout = (page) => <DashboardLayout>{page}</DashboardLayout>

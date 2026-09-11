@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CippIcons } from '../../utils/icon-registry'
 import PropTypes from 'prop-types'
 import axios from 'axios'
 import {
@@ -21,15 +22,6 @@ import {
   Typography,
 } from '@mui/material'
 import { Grid } from '@mui/system'
-import {
-  ArrowBack,
-  ArrowForward,
-  ContentCopy,
-  ErrorOutline,
-  Refresh,
-  TaskAlt,
-  WarningAmber,
-} from '@mui/icons-material'
 import { ApiGetCall, ApiPostCall } from '../../api/ApiCall'
 import { usePermissions } from '../../hooks/use-permissions'
 import { buildVersionedHeaders } from '../../utils/cippVersion'
@@ -103,17 +95,24 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          alignItems: "center",
+          flexWrap: "wrap"
+        }}>
         <Chip
           size="small"
           color={statusMeta.chipColor}
           icon={
             statusKey === 'CompletedWithErrors' ? (
-              <WarningAmber />
+              <CippIcons.WarningAmber />
             ) : statusKey === 'Failed' ? (
-              <ErrorOutline />
+              <CippIcons.ErrorOutlined />
             ) : isTerminal ? (
-              <TaskAlt />
+              <CippIcons.TaskAlt />
             ) : undefined
           }
           label={statusMeta.label}
@@ -122,7 +121,7 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
         <Button
           size="small"
           variant="outlined"
-          startIcon={<Refresh />}
+          startIcon={<CippIcons.Refresh />}
           disabled={refreshing}
           onClick={onRefresh}
         >
@@ -148,7 +147,13 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
               </Typography>
             ))}
           </Stack>
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+              display: "block",
+              mt: 1
+            }}>
             Paths and filenames are redacted from SharePoint logs.
           </Typography>
         </Alert>
@@ -170,25 +175,35 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
       ) : null}
 
       <Card variant="outlined" sx={{ p: 2 }}>
-        <Grid container spacing={2} alignItems="center">
+        <Grid container spacing={2} sx={{
+          alignItems: "center"
+        }}>
           <Grid size={{ xs: 12, md: 5 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" sx={{
+              color: "text.secondary"
+            }}>
               Source
             </Typography>
             <Typography variant="body1">{status?.SourceSiteName ?? '—'}</Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {status?.SourceLibraryName ?? '—'}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 2 }} sx={{ textAlign: { xs: 'left', md: 'center' } }}>
-            <ArrowForward color="action" />
+            <CippIcons.ArrowForward color="action" />
           </Grid>
           <Grid size={{ xs: 12, md: 5 }}>
-            <Typography variant="overline" color="text.secondary">
+            <Typography variant="overline" sx={{
+              color: "text.secondary"
+            }}>
               Destination
             </Typography>
             <Typography variant="body1">{status?.DestSiteName ?? '—'}</Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {status?.DestLibraryName ?? '—'}
             </Typography>
           </Grid>
@@ -197,11 +212,20 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
 
       {progressValue != null ? (
         <Box>
-          <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.5 }}>
-            <Typography variant="caption" color="text.secondary">
+          <Stack
+            direction="row"
+            sx={{
+              justifyContent: "space-between",
+              mb: 0.5
+            }}>
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Overall progress
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               {progressValue}%
             </Typography>
           </Stack>
@@ -221,7 +245,12 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
           <Grid container>
             {metrics.map((metric) => (
               <Grid key={metric.label} size={{ xs: 12, sm: 4 }} sx={{ p: 2 }}>
-                <Typography variant="overline" color="text.secondary" display="block">
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: "text.secondary",
+                    display: "block"
+                  }}>
                   {metric.label}
                 </Typography>
                 <Typography variant="h6" color={metric.emphasis}>
@@ -234,20 +263,24 @@ const LibraryCopyStatusPanel = ({ status, operationId, refreshing, onRefresh }) 
       ) : null}
 
       <Stack spacing={0.5}>
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{
+          color: "text.secondary"
+        }}>
           Operation ID:{' '}
           <Box component="span" sx={{ fontFamily: 'monospace' }}>
             {operationId}
           </Box>
         </Typography>
         {status?.LastUpdatedUtc ? (
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Last updated: {formatLastUpdated(status.LastUpdatedUtc)}
           </Typography>
         ) : null}
       </Stack>
     </Stack>
-  )
+  );
 }
 
 LibraryCopyStatusPanel.propTypes = {
@@ -328,16 +361,26 @@ const LibraryCopyPane = ({
       </Typography>
       {view === 'libraries' && selectedSite ? (
         <>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-            <Button size="small" startIcon={<ArrowBack />} onClick={() => setView('sites')}>
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{
+              alignItems: "center",
+              mb: 1
+            }}>
+            <Button size="small" startIcon={<CippIcons.ArrowBack />} onClick={() => setView('sites')}>
               Sites
             </Button>
-            <Typography variant="body2" color="text.secondary" noWrap>
+            <Typography variant="body2" noWrap sx={{
+              color: "text.secondary"
+            }}>
               {selectedSite.displayName ?? selectedSite.name}
             </Typography>
           </Stack>
           {librariesApi.isFetching ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Loading libraries…
             </Typography>
           ) : (
@@ -373,7 +416,9 @@ const LibraryCopyPane = ({
       ) : (
         <>
           {sitesApi.isFetching ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               Loading sites…
             </Typography>
           ) : (
@@ -395,7 +440,7 @@ const LibraryCopyPane = ({
         </>
       )}
     </Box>
-  )
+  );
 }
 
 LibraryCopyPane.propTypes = {
@@ -608,7 +653,9 @@ export const CippSharePointLibraryCopyDialog = ({
             {!operationId ? (
               <>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-                  <Box flex={1}>
+                  <Box sx={{
+                    flex: 1
+                  }}>
                     <LibraryCopyPane
                       label="Source"
                       tenantFilter={tenantFilter}
@@ -623,7 +670,9 @@ export const CippSharePointLibraryCopyDialog = ({
                       otherListId={destSelectedLibrary?.Id ?? destSelectedLibrary?.id}
                     />
                   </Box>
-                  <Box flex={1}>
+                  <Box sx={{
+                    flex: 1
+                  }}>
                     <LibraryCopyPane
                       label="Destination"
                       tenantFilter={tenantFilter}
@@ -648,7 +697,12 @@ export const CippSharePointLibraryCopyDialog = ({
                   <MenuItem value="Replace">Replace existing items</MenuItem>
                   <MenuItem value="Fail">Fail on conflict</MenuItem>
                 </TextField>
-                <Typography variant="caption" color="text.secondary" display="block">
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "text.secondary",
+                    display: "block"
+                  }}>
                   Metadata and versions are preserved via MoveButKeepSource. Custom column values require
                   matching columns on the destination. File-level progress is not shown to protect tenant
                   content.
@@ -670,7 +724,7 @@ export const CippSharePointLibraryCopyDialog = ({
             <Button
               variant="contained"
               color={conflictBehavior === 'Replace' ? 'warning' : 'primary'}
-              startIcon={<ContentCopy />}
+              startIcon={<CippIcons.ContentCopy />}
               disabled={!readyForReview || execApi.isPending}
               onClick={handleReview}
             >
@@ -712,7 +766,9 @@ export const CippSharePointLibraryCopyDialog = ({
                 CIPP.
               </Alert>
             ) : null}
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" sx={{
+              color: "text.secondary"
+            }}>
               Contents merge into the destination library. Source is not deleted. Missing custom columns on
               the destination drop those field values.
             </Typography>
@@ -726,7 +782,7 @@ export const CippSharePointLibraryCopyDialog = ({
         </DialogActions>
       </Dialog>
     </>
-  )
+  );
 }
 
 CippSharePointLibraryCopyDialog.propTypes = {

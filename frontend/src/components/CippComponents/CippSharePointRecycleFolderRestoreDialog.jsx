@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CippIcons } from '../../utils/icon-registry'
 import PropTypes from 'prop-types'
 import {
   Alert,
@@ -9,7 +10,6 @@ import {
   DialogTitle,
   Typography,
 } from '@mui/material'
-import { RestoreFromTrash } from '@mui/icons-material'
 import { CippSharePointFolderView } from './CippSharePointFolderView'
 
 /**
@@ -54,7 +54,12 @@ export const CippSharePointRecycleFolderRestoreDialog = ({
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="lg">
       <DialogTitle>Restore from recycle bin</DialogTitle>
       <DialogContent dividers sx={{ pt: 2 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 1.5
+          }}>
           Select one or more deleted items under this folder to restore. Everything matching this
           path in the loaded recycle bin is listed (API cap applies).
         </Typography>
@@ -86,7 +91,7 @@ export const CippSharePointRecycleFolderRestoreDialog = ({
         </Button>
         <Button
           variant="contained"
-          startIcon={<RestoreFromTrash />}
+          startIcon={<CippIcons.RestoreFromTrash />}
           onClick={handleConfirm}
           disabled={isPending || selectedItems.length === 0}
         >
@@ -95,7 +100,7 @@ export const CippSharePointRecycleFolderRestoreDialog = ({
         </Button>
       </DialogActions>
     </Dialog>
-  )
+  );
 }
 
 CippSharePointRecycleFolderRestoreDialog.propTypes = {

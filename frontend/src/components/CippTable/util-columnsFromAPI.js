@@ -169,7 +169,7 @@ const resolveVariables = (columnName, dataSample) => {
       return resolved
     }
     return match // return original if no resolver found
-  })
+  });
 }
 
 const getAtPath = (obj, path) => {
@@ -197,6 +197,9 @@ const mergeKeys = (dataArray) => {
         return base
       }
       Object.keys(obj).forEach((key) => {
+        // API rows are untrusted input; never let a key walk up the prototype chain.
+        // Written as literal comparisons (not a Set lookup) so static analysis can see the guard.
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') return
         if (
           typeof obj[key] === 'object' &&
           obj[key] !== null &&

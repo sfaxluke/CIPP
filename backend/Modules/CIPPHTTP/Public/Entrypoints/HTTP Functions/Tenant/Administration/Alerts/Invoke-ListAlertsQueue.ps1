@@ -38,14 +38,15 @@ function Invoke-ListAlertsQueue {
             CustomSubject   = $Task.CustomSubject
             Enabled         = $Task.Disabled -ne $true
             RawAlert        = @{
-                Conditions    = @($Conditions)
-                Actions       = @($($Task.Actions | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue))
-                Tenants       = @($Tenants)
-                type          = $Task.type
-                RowKey        = $Task.RowKey
-                PartitionKey  = $Task.PartitionKey
-                AlertComment  = $Task.AlertComment
-                CustomSubject = $Task.CustomSubject
+                Conditions        = @($Conditions)
+                Actions           = @($($Task.Actions | ConvertFrom-Json -Depth 10 -ErrorAction SilentlyContinue))
+                Tenants           = @($Tenants)
+                type              = $Task.type
+                RowKey            = $Task.RowKey
+                PartitionKey      = $Task.PartitionKey
+                AlertComment      = $Task.AlertComment
+                CustomSubject     = $Task.CustomSubject
+                PsaTicketPriority = $Task.PsaTicketPriority
             }
         }
 
@@ -118,7 +119,11 @@ function Invoke-ListAlertsQueue {
                             type  = $_.type ?? 'Tenant'
                         }
                     })
-                $ExcludedTenants = @()
+                # A legacy row's excludedTenants is a snapshot of every unselected tenant, ignored at
+                # run time and hidden here. A versioned row's is the operator's own picks.
+                if (-not $Task.TenantSelectionVersion) {
+                    $ExcludedTenants = @()
+                }
             } catch {
                 Write-Warning "Failed to parse Tenants for alert task $($Task.RowKey): $($_.Exception.Message)"
                 $TenantsForDisplay = @([PSCustomObject]@{
