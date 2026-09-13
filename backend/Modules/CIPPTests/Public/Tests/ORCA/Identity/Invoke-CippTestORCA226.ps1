@@ -7,27 +7,27 @@ function Invoke-CippTestORCA226 {
 
     try {
         $AcceptedDomains = Get-CIPPTestData -TenantFilter $Tenant -Type 'ExoAcceptedDomains'
-        $SafeLinksPolicies = Get-CIPPTestData -TenantFilter $Tenant -Type 'ExoSafeLinksPolicies'
+        $SafeLinksRules = Get-CIPPTestData -TenantFilter $Tenant -Type 'ExoSafeLinksRules'
 
         if (-not $AcceptedDomains) {
             Add-CippTestResult -TenantFilter $Tenant -TestId 'ORCA226' -TestType 'Identity' -Status 'Skipped' -ResultMarkdown 'No accepted domains found in database.' -Risk 'High' -Name 'Each domain has a Safe Links policy' -UserImpact 'High' -ImplementationEffort 'Medium' -Category 'Safe Links'
             return
         }
 
-        if (-not $SafeLinksPolicies) {
+        if (-not $SafeLinksRules) {
             if (-not (Test-CIPPStandardLicense -StandardName 'ORCA226' -TenantFilter $Tenant -Preset DefenderForOffice365 -SkipLog)) {
                 Add-CippTestResult -TenantFilter $Tenant -TestId 'ORCA226' -TestType 'Identity' -Status 'Unlicensed' -ResultMarkdown 'This tenant is not licensed for Microsoft Defender for Office 365 (ATP). Required capabilities: ATP_ENTERPRISE, ATP_ENTERPRISE_GOV, THREAT_INTELLIGENCE, THREAT_INTELLIGENCE_GOV.' -Risk 'High' -Name 'Each domain has a Safe Links policy' -UserImpact 'High' -ImplementationEffort 'Medium' -Category 'Safe Links'
             } else {
-                Add-CippTestResult -TenantFilter $Tenant -TestId 'ORCA226' -TestType 'Identity' -Status 'Failed' -ResultMarkdown 'No Safe Links policies found. Each domain should have a Safe Links policy.' -Risk 'High' -Name 'Each domain has a Safe Links policy' -UserImpact 'High' -ImplementationEffort 'Medium' -Category 'Safe Links'
+                Add-CippTestResult -TenantFilter $Tenant -TestId 'ORCA226' -TestType 'Identity' -Status 'Failed' -ResultMarkdown 'No Safe Links rules found. Each domain should have a Safe Links policy.' -Risk 'High' -Name 'Each domain has a Safe Links policy' -UserImpact 'High' -ImplementationEffort 'Medium' -Category 'Safe Links'
             }
             return
         }
 
-        # Get all recipient domains from policies
+        # Get all recipient domains from rules
         $CoveredDomains = [System.Collections.Generic.List[string]]::new()
-        foreach ($Policy in $SafeLinksPolicies) {
-            if ($Policy.RecipientDomainIs) {
-                foreach ($Domain in $Policy.RecipientDomainIs) {
+        foreach ($Rule in $SafeLinksRules) {
+            if ($Rule.RecipientDomainIs) {
+                foreach ($Domain in $Rule.RecipientDomainIs) {
                     $CoveredDomains.Add($Domain) | Out-Null
                 }
             }
@@ -44,7 +44,7 @@ function Invoke-CippTestORCA226 {
             $Status = 'Passed'
             $Result = [System.Text.StringBuilder]::new("All accepted domains are covered by Safe Links policies.`n`n")
             $null = $Result.Append("**Total Accepted Domains:** $($AcceptedDomains.Count)`n")
-            $null = $Result.Append("**Total Safe Links Policies:** $($SafeLinksPolicies.Count)")
+            $null = $Result.Append("**Total Safe Links Rules:** $($SafeLinksRules.Count)")
         } else {
             $Status = 'Failed'
             $Result = [System.Text.StringBuilder]::new("$($DomainsWithoutPolicy.Count) domains do not have a Safe Links policy.`n`n")
