@@ -26,7 +26,12 @@ function Invoke-CippTestORCA226 {
         # Get all recipient domains from rules
         $CoveredDomains = [System.Collections.Generic.List[string]]::new()
         foreach ($Rule in $SafeLinksRules) {
-            if ($Rule.State -eq 'Enabled' -and $Rule.RecipientDomainIs) {
+            if (
+                $Rule.State -eq 'Enabled' -and
+                $Rule.RecipientDomainIs -and
+                -not $Rule.ExceptIfSentTo -and
+                -not $Rule.ExceptIfSentToMemberOf
+            ) {
                 foreach ($Domain in $Rule.RecipientDomainIs) {
                     if ($Rule.ExceptIfRecipientDomainIs -notcontains $Domain) {
                         $CoveredDomains.Add($Domain) | Out-Null
@@ -49,8 +54,8 @@ function Invoke-CippTestORCA226 {
             $null = $Result.Append("**Total Safe Links Rules:** $($SafeLinksRules.Count)")
         } else {
             $Status = 'Failed'
-            $Result = [System.Text.StringBuilder]::new("$($DomainsWithoutPolicy.Count) domains do not have a Safe Links policy.`n`n")
-            $null = $Result.Append("**Domains Without Policy:**`n`n")
+            $Result = [System.Text.StringBuilder]::new("$($DomainsWithoutPolicy.Count) domains are not fully covered by a Safe Links policy.`n`n")
+            $null = $Result.Append("**Domains Without Full Policy Coverage:**`n`n")
             foreach ($Domain in $DomainsWithoutPolicy) {
                 $null = $Result.Append("- $Domain`n")
             }
