@@ -26,9 +26,11 @@ function Invoke-CippTestORCA227 {
         # Get all recipient domains from rules
         $CoveredDomains = [System.Collections.Generic.List[string]]::new()
         foreach ($Rule in $SafeAttachmentRules) {
-            if ($Rule.RecipientDomainIs) {
+            if ($Rule.State -eq 'Enabled' -and $Rule.RecipientDomainIs) {
                 foreach ($Domain in $Rule.RecipientDomainIs) {
-                    $CoveredDomains.Add($Domain) | Out-Null
+                    if ($Rule.ExceptIfRecipientDomainIs -notcontains $Domain) {
+                        $CoveredDomains.Add($Domain) | Out-Null
+                    }
                 }
             }
         }
