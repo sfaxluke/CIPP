@@ -12,16 +12,16 @@ Whether you opt to be hosted by CyberDrain or self-host, we've made installation
 {% step %}
 ### Open the Management Portal
 
-You will receive an email from GitHub once you complete your sponsorship payment directing you to [management.cipp.app](https://management.cipp.app/).
+You will receive a welcome email after you complete your subscription payment directing you to [management.cipp.app](https://management.cipp.app/).
 {% endstep %}
 
 {% step %}
 ### Log In
 
-Use the GitHub account you signed up for the sponsorship to log in to the management portal.&#x20;
+Use the access details from your welcome email to log in to the management portal.&#x20;
 
 {% hint style="warning" %}
-If you used an organisation account, please send in a support ticket to [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com) with the organisation GitHub account and a personal GitHub account. We will add the personal account to the sponsorship to allow you to log in.
+If you have trouble accessing the management portal, please send in a support ticket to [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com) and we will help you get signed in.
 {% endhint %}
 {% endstep %}
 

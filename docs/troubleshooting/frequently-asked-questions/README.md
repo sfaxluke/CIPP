@@ -49,13 +49,13 @@ Hosted CIPP is €99/month and comes with unlimited support, weekly live trainin
 
 <details>
 
-<summary>Why is my GitHub Sponsors charge annual when I expected it monthly?</summary>
+<summary>How is hosted CIPP billed?</summary>
 
-GitHub Sponsors has no billing cycle of its own. A sponsorship takes the billing date, payment method and receipt already set on the GitHub account that started it, so the frequency follows that account's existing plan rather than anything chosen during sponsorship.
+Hosted CIPP subscriptions use the same secure checkout linked in the setup guide and are billed at €99/month.
 
-If the GitHub account is on annual billing, the sponsorship is billed annually on the same renewal date and lands on the same receipt as the account's other GitHub charges. If the account is on monthly billing, the sponsorship is billed monthly.
+Your billing details and receipt information are provided during checkout and in your confirmation email.
 
-Review your account's billing date and payment method at [github.com/settings/billing](https://github.com/settings/billing). Changing the account's billing frequency changes how the sponsorship is billed from the next renewal onwards. See [sponsor-quick-start.md](../../setup/resources/sponsor-quick-start.md "mention") for the rest of the sponsorship process.
+If you need help with billing after subscribing, contact [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com). See [sponsor-quick-start.md](../../setup/resources/sponsor-quick-start.md "mention") for the rest of the setup process.
 
 </details>
 
