@@ -37,10 +37,10 @@ Go to **Application Settings** → click **Run Backup**.
 
 {% stepper %}
 {% step %}
-**Go to** CIPP's [Management Portal](https://management.cipp.app/) and log in with the GitHub account you used to sponsor.
+**Go to** CIPP's [Management Portal](https://management.cipp.app/) and log in using the email address you signed up with if you subscribed through Stripe, or your GitHub account if you are still using GitHub Sponsors before October 1, 2026.
 
 {% hint style="warning" %}
-NOTE: If you sponsor with an organisation GitHub account, please send in a message to helpdesk@cyberdrain.com with your personal GitHub username so that we can manually add that user to the portal. You cannot log in to the management portal with organisation accounts.
+NOTE: If you are still using GitHub Sponsors and signed up with an organisation account, please send a message to helpdesk@cyberdrain.com with your personal GitHub username so we can help you access the portal. If you have any other trouble accessing the management portal after subscribing, please contact helpdesk@cyberdrain.com.
 {% endhint %}
 {% endstep %}
 
