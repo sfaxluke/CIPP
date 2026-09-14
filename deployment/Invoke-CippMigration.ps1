@@ -786,9 +786,19 @@ if (-not $SkipDeployment) {
         Write-Information "Web app '$TargetWebAppName' already exists - keeping its role assignments."
     } else {
         Write-Information "Checking for stale role assignments on '$TargetWebAppName'..."
-        $staleAssignments = @(Invoke-AzWithRetry -OperationName 'Listing role assignments' -ScriptBlock {
-                Get-AzRoleAssignment -Scope $targetSiteScope -ErrorAction Stop
-            } | Where-Object { $_.Scope -eq $targetSiteScope })
+        $staleAssignments = @()
+        try {
+            $staleAssignments = @(Invoke-AzWithRetry -OperationName 'Listing role assignments' -ScriptBlock {
+                    Get-AzRoleAssignment -Scope $targetSiteScope -ErrorAction Stop
+                } | Where-Object { $_.Scope -eq $targetSiteScope })
+        } catch {
+            # Some Az versions 404 the list when the resource behind the scope is gone —
+            # that just means nothing lingers. Anything else: warn and proceed; aborting
+            # here (old apps deleted, nothing deployed) is guaranteed downtime.
+            if ($_.Exception.Message -notmatch 'NotFound') {
+                Write-Warning "  Could not list role assignments on '$TargetWebAppName': $($_.Exception.Message) — continuing; the deploy may fail if a stale assignment lingers."
+            }
+        }
         foreach ($assignment in $staleAssignments) {
             Write-Information "  Removing stale '$($assignment.RoleDefinitionName)' assignment for $($assignment.ObjectType) $($assignment.ObjectId)"
             if ($PSCmdlet.ShouldProcess($assignment.RoleAssignmentId, 'Remove stale role assignment')) {
