@@ -18,10 +18,10 @@ You will receive a welcome email after you complete your subscription payment di
 {% step %}
 ### Log In
 
-Use the access details from your welcome email to log in to the management portal.&#x20;
+Use the email address you signed up with if you subscribed through Stripe, or your GitHub account if you are still using GitHub Sponsors before October 1, to log in to the management portal.&#x20;
 
 {% hint style="warning" %}
-If you have trouble accessing the management portal, please send in a support ticket to [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com) and we will help you get signed in.
+If you are still using GitHub Sponsors and signed up with an organisation account, please send in a support ticket to [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com) with your personal GitHub username so we can help you get signed in. If you have any other trouble accessing the management portal, please contact helpdesk@cyberdrain.com.
 {% endhint %}
 {% endstep %}
 

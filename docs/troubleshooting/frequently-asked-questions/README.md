@@ -51,9 +51,9 @@ Hosted CIPP is €99/month and comes with unlimited support, weekly live trainin
 
 <summary>How is hosted CIPP billed?</summary>
 
-Hosted CIPP subscriptions use the same secure checkout linked in the setup guide and are billed at €99/month.
+Hosted CIPP subscriptions are €99/month. New subscriptions use the secure checkout linked in the setup guide, while existing GitHub Sponsors subscribers can continue using that billing path until October 1.
 
-Your billing details and receipt information are provided during checkout and in your confirmation email.
+If you subscribed through Stripe, your billing details and receipt information are provided during checkout and in your confirmation email. If you are still on GitHub Sponsors before October 1, billing continues through your GitHub account.
 
 If you need help with billing after subscribing, contact [helpdesk@cyberdrain.com](mailto:helpdesk@cyberdrain.com). See [sponsor-quick-start.md](../../setup/resources/sponsor-quick-start.md "mention") for the rest of the setup process.
 
