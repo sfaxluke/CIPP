@@ -12,7 +12,7 @@ To get started you must follow or have the following ready. Click on the links f
 {% step %}
 ### Active Sponsorship
 
-Start by signing up for the $99 subscription using your GitHub account on the [GitHub Sponsorship](https://github.com/sponsors/KelvinTegelaar/sponsorships?tier_id=101398) page.
+Start by signing up for the €99/month subscription using your GitHub account on the [GitHub Sponsorship](https://github.com/sponsors/KelvinTegelaar/sponsorships?tier_id=101398) page.
 {% endstep %}
 {% endstepper %}
 
