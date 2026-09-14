@@ -43,7 +43,7 @@ Yes. Hosted CIPP is maintained by an expert team of Azure Administrators and run
 
 Assuming you're running on the click-to-deploy configuration and average usage patterns CIPP has a cost of about €25 a month. You can check the costs, and estimated costs, for the resource group on the Azure Portal.
 
-Hosted CIPP is €99,- and comes with unlimited support, weekly live training sessions, and more benefits.
+Hosted CIPP is €99/month and comes with unlimited support, weekly live training sessions, and more benefits.
 
 </details>
 
@@ -451,4 +451,3 @@ Auto Extend is only available for relationships without the Global Administrator
 You don't need to do anything. The personal access token was only needed for initial deployment.
 
 </details>
-
