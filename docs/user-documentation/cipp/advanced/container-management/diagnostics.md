@@ -39,6 +39,8 @@ Charts sharing the selected window and the same five-minute intervals, so a spik
 | Heap (MB)            | Memory in use over time, with a dashed line marking the limit, and dashed markers where a restart or an out-of-memory event occurred.                                                           |
 | Pool Pressure        | How often the worker pool ran out, alongside the longest a request waited for a worker. Only appears where there was pool exhaustion, or a wait of ten seconds or more.                         |
 
+Below the timeline, an API Egress card shows a used-of-cap gauge for the instance total and a stacked per-client trend, switchable between 24h, 3d and 7d. It only appears on hosted instances with egress accounting enabled, and is separate from the API Egress / 5 min chart above, which follows the page's own window selector rather than its own range toggle.
+
 ## Restart & Out-of-Memory Events
 
 Every container restart and out-of-memory event in the window, alongside the traffic that preceded it, so an event can be tied to whatever was pushing the instance at the time.

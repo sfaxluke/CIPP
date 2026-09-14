@@ -30,6 +30,14 @@ The IP Range list supports both IPv4 and IPv6 addresses as standalone IP address
 Custom Roles will limit which API endpoints each API Client can access. This can be used to limit all API calls to read only for example.
 {% endhint %}
 
+## API Egress
+
+{% hint style="info" %}
+Visible to SuperAdmins only. The card is hidden entirely on instances where egress accounting isn't enabled, such as most self-hosted deployments.
+{% endhint %}
+
+At the top of the CIPP-API page, on hosted instances with egress accounting enabled, a card shows how much data your API clients have served today against the instance's daily cap, with a per-client trend you can switch between 24h, 3d and 7d windows. The API Client table below it also gets an **EgressToday** column with each client's own total for today.
+
 ## Using an API Client
 
 After creating your first API client, the page will update to include additional information that is necessary for your automation:
