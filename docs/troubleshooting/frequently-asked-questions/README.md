@@ -276,7 +276,7 @@ See the instructions to switch the tenant mode [here](../../setup/installation/o
 
 <summary>Does CIPP require a specific licence?</summary>
 
-No, CIPP can work with any M365 licence in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, e.g. to manage Intune, the tenant must have Intune Licensing.
+No, CIPP can work with any M365 licence in your partner tenant. For specific features CIPP will of course only function if the tenant is licensed correctly, for example to manage Intune, the tenant must have Intune Licensing.
 
 </details>
 
@@ -380,9 +380,9 @@ This is one of the most common points of confusion for newly onboarded partners,
 It's important to understand that there are **two different identities** at play in CIPP:
 
 * **The CIPP service account (CIPP-SAM).** This is what CIPP itself uses to read and manage tenants in the background. The onboarding wizard, the 15 [recommended-roles.md](../../setup/maintaining-cipp/recommended-roles.md "mention"), CPV refreshes, and the Permissions Check all relate to _this_ account. If CIPP is displaying tenant data, this account is working.
-* **Your individual technician's account.** The **Portals Quick Access** links on the [dashboard](../../user-documentation/dashboard/ "mention") and the portal jump-ins on [tenant-select.md](../../user-documentation/shared-features/menu-bar/tenant-select.md "mention") leave CIPP entirely and open the Microsoft portal **as the signed-in technician** — not as the service account. For these to work, the technician's _own_ account must have a GDAP path into that tenant.
+* **Your individual technician's account.** The **Portals Quick Access** links on the [dashboard](../../user-documentation/dashboard/ "mention") and the portal jump-ins on [tenant-select.md](../../user-documentation/shared-features/menu-bar/tenant-select.md "mention") leave CIPP entirely and open the Microsoft portal **as the signed-in technician**, not as the service account. For these to work, the technician's _own_ account must have a GDAP path into that tenant.
 
-So if CIPP works but a technician can't use the portal links, refreshing CPV, re-running the Permissions Check, or confirming the 15 roles **will not help** — those only affect the service account.
+So if CIPP works but a technician can't use the portal links, refreshing CPV, re-running the Permissions Check, or confirming the 15 roles **will not help**: those only affect the service account.
 
 **Typical symptoms, all from the same cause:**
 
@@ -404,7 +404,7 @@ Adding a user to the M365 GDAP groups grants that user delegated access to **eve
 {% endhint %}
 
 {% hint style="info" %}
-GDAP delegated access is also bounded by the roles in each relationship. If a role (for example SharePoint Administrator) was never part of the relationship for that client, no one — service account or technician — will have that access until a new relationship containing the role is established. See [recommended-roles.md](../../setup/maintaining-cipp/recommended-roles.md "mention") and the [gdap-management](../../user-documentation/tenant/gdap-management/ "mention") section. [Microsoft GDAP Documentation](https://learn.microsoft.com/en-us/partner-center/customers/gdap-introduction)
+GDAP delegated access is also bounded by the roles in each relationship. If a role (for example SharePoint Administrator) was never part of the relationship for that client, no one, service account or technician, will have that access until a new relationship containing the role is established. See [recommended-roles.md](../../setup/maintaining-cipp/recommended-roles.md "mention") and the [gdap-management](../../user-documentation/tenant/gdap-management/ "mention") section. [Microsoft GDAP Documentation](https://learn.microsoft.com/en-us/partner-center/customers/gdap-introduction)
 {% endhint %}
 
 </details>
