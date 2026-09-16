@@ -160,9 +160,26 @@ function Invoke-ExecApiClient {
 
                 Add-CIPPAzDataTableEntity @Table -Entity $Client -Force | Out-Null
 
-                # When this client is MCP-enabled, configure its app registration as the MCP OAuth
-                # resource (host identifier URIs + v2 tokens) so the Claude connector flow can resolve it.
+                # When this client is MCP-enabled it becomes the instance's single MCP resource.
+                # Only one client may hold MCP Access at a time - the connector flow advertises
+                # exactly one app registration - so clear the flag on every other client first. This
+                # stops stale holders left behind by failed setup attempts from accumulating and one
+                # of them being advertised (see issue #619).
                 if ([bool]($Request.Body.MCPAllowed ?? $false)) {
+                    $OtherMcpClients = @(Get-CIPPAzDataTableEntity @Table | Where-Object {
+                            ![string]::IsNullOrEmpty($_.RowKey) -and $_.RowKey -ne "$ClientId" -and "$($_.MCPAllowed)" -eq 'True'
+                        })
+                    foreach ($OtherClient in $OtherMcpClients) {
+                        $OtherClient | Add-Member -NotePropertyName 'MCPAllowed' -NotePropertyValue $false -Force
+                        Add-CIPPAzDataTableEntity @Table -Entity $OtherClient -Force | Out-Null
+                    }
+                    if ($OtherMcpClients.Count -gt 0) {
+                        Write-LogMessage -headers $Request.Headers -API 'ExecApiClient' -message "Cleared MCP Access on $($OtherMcpClients.Count) other client(s); '$($Client.AppName)' is now the sole MCP resource." -Sev 'Info'
+                        $Results.Add("MCP Access is limited to one client - cleared it on $($OtherMcpClients.Count) other client(s).")
+                    }
+
+                    # Configure this app registration as the MCP OAuth resource (host identifier URIs
+                    # + v2 tokens) so the Claude connector flow can resolve it.
                     try {
                         $null = Set-CIPPMCPClientApp -AppId $ClientId -Headers $Request.Headers
                         $Results.Add('MCP resource URIs, v2 tokens, and callbacks for known MCP clients (Claude, ChatGPT, VS Code, Copilot) configured on the app registration. Run Save to Azure to apply the changes.')
@@ -221,40 +238,20 @@ function Invoke-ExecApiClient {
                 Set-CippApiAuth -RGName $RGName -FunctionAppName $FunctionAppName -TenantId $TenantId -ClientIds $ClientIds -McpClientIds $McpClientIds
 
                 if ($McpClientIds.Count -gt 0 -and $env:WEBSITE_HOSTNAME) {
-                    # Advertise the OIDC scopes alongside the resource scope so discovery-based MCP
-                    # clients (Copilot Studio, ChatGPT) request a refresh token. offline_access is
-                    # what makes Entra issue one; without it the client re-consents every ~hour.
-                    # Claude appends offline_access itself, but stricter clients only request what the
-                    # metadata advertises, so it has to be in the protected-resource document and the
-                    # EasyAuth challenge scope too - not just the authorization-server document.
-                    $McpScope = "https://$($env:WEBSITE_HOSTNAME)/user_impersonation"
-                    $McpScopesSupported = @('openid', 'profile', 'offline_access', $McpScope)
-                    $McpDefaultScopeString = 'openid profile offline_access {0}' -f $McpScope
-                    if ($env:CIPPNG) {
-                        $TenantedLogin = "https://login.microsoftonline.com/$($env:TenantID)"
-                        $PrmDocument = [ordered]@{
-                            resource                 = '{origin}/api/ExecMcp'
-                            authorization_servers    = @('{origin}')
-                            scopes_supported         = $McpScopesSupported
-                            bearer_methods_supported = @('header')
-                        } | ConvertTo-Json -Compress
-                        $AsDocument = [ordered]@{
-                            issuer                                = '{origin}'
-                            authorization_endpoint                = "$TenantedLogin/oauth2/v2.0/authorize"
-                            token_endpoint                        = "$TenantedLogin/oauth2/v2.0/token"
-                            jwks_uri                              = "$TenantedLogin/discovery/v2.0/keys"
-                            registration_endpoint                 = '{origin}/api/PublicMcpRegister'
-                            response_types_supported              = @('code')
-                            response_modes_supported              = @('query', 'form_post')
-                            grant_types_supported                 = @('authorization_code', 'refresh_token')
-                            code_challenge_methods_supported      = @('S256')
-                            token_endpoint_auth_methods_supported = @('none', 'client_secret_post', 'client_secret_basic')
-                            scopes_supported                      = $McpScopesSupported
-                        } | ConvertTo-Json -Compress
-                        $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{ 'CRAFT_PRM' = "$PrmDocument"; 'CRAFT_PRM_AS' = "$AsDocument"; 'WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES' = $McpDefaultScopeString }
-                    } else {
-                        $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{ 'WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES' = $McpDefaultScopeString }
-                    }
+                    # Advertise the OIDC + offline_access scopes alongside the resource scope so
+                    # discovery-based MCP clients (ChatGPT, VS Code, Copilot CLI) request a refresh
+                    # token. offline_access is what makes Entra issue one; without it the client
+                    # re-consents every ~hour. Claude appends offline_access itself, but stricter
+                    # clients only request what the metadata advertises, so it has to be in the
+                    # challenge header and the discovery docs, not just one of them. The values come
+                    # from Get-CippMcpScopeAppSettings so the Initialize-CIPPAuth warmup reconcile
+                    # writes byte-identical settings and the two paths never fight each other.
+                    # NOTE: Copilot Studio does NOT read any of this. Entra has no RFC 7591 DCR, so
+                    # Copilot Studio uses Manual OAuth with a maker-typed scope; its refresh token
+                    # depends on offline_access being consented on the MCP client app registration
+                    # (Set-CIPPMCPClientApp / Grant-CippAppGraphConsent), not on these documents.
+                    $McpAppSettings = Get-CippMcpScopeAppSettings -Hostname $env:WEBSITE_HOSTNAME -TenantId $env:TenantID -IsCippNg:([bool]$env:CIPPNG)
+                    $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting $McpAppSettings
                 } else {
                     $null = Update-CIPPAzFunctionAppSetting -Name $FunctionAppName -ResourceGroupName $RGName -AppSetting @{} -RemoveKeys @('WEBSITE_AUTH_PRM_DEFAULT_WITH_SCOPES', 'CRAFT_PRM', 'CRAFT_PRM_AS')
                 }

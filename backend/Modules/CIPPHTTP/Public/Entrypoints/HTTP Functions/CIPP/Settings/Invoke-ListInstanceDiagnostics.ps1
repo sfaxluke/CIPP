@@ -43,6 +43,12 @@ function Invoke-ListInstanceDiagnostics {
         return $HeapCapMb
     }
 
+    function Format-DiagnosticsBytes {
+        param([long]$Bytes)
+        if ($Bytes -ge 1GB) { return '{0:N1} GB' -f ($Bytes / 1GB) }
+        return '{0:N1} MB' -f ($Bytes / 1MB)
+    }
+
     try {
         $Now = [DateTime]::UtcNow
         $WindowStart = $Now.AddHours(-$Hours)
@@ -69,6 +75,10 @@ function Invoke-ListInstanceDiagnostics {
             if ($Row.AppName) { $ClientTotals[$AppId].AppName = [string]$Row.AppName }
             if ($Row.IP) { $ClientTotals[$AppId].IP = [string]$Row.IP }
         }
+
+        # Craft owns this table and only writes it when egress accounting is on, so $null here
+        # means "no egress data" for both actions.
+        $Egress = Get-CIPPEgressAccounting -Hours $Hours -Now $Now
 
         switch ($Action) {
             'Checks' {
@@ -128,6 +138,44 @@ function Invoke-ListInstanceDiagnostics {
                         Detail = if ($StalledTotal -gt 0) { "$StalledTotal stalled orchestrator run report(s) in the last ${Hours}h" } else { "No stalled orchestrator runs in the last ${Hours}h" }
                         Fix    = if ($StalledTotal -gt 0) { 'Runs have pending work but nothing running - cancel the stuck run from Worker Health and let it re-queue.' } else { $null }
                     })
+
+                # Craft stamps the daily instance-total row on the first API response it serves,
+                # so no row means no API-client traffic today rather than a zero reading.
+                $EgressHasDay = $Egress -and ($Egress.TodayBytes -gt 0 -or $Egress.TodayRequests -gt 0 -or $Egress.CapBytes -gt 0)
+                if (-not $EgressHasDay) {
+                    $Results.Add(@{ Check = 'egress'; Status = 'INFO'; Detail = 'No API egress recorded today - egress accounting is off or no API client traffic was served'; Fix = $null })
+                } else {
+                    $TodayDisplay = Format-DiagnosticsBytes -Bytes $Egress.TodayBytes
+                    $CapDisplay = if ($Egress.CapBytes -gt 0) { Format-DiagnosticsBytes -Bytes $Egress.CapBytes } else { 'unknown' }
+                    $Percent = if ($Egress.CapBytes -gt 0) { [math]::Round(($Egress.TodayBytes / $Egress.CapBytes) * 100, 1) } else { $null }
+
+                    $Busiest = [System.Collections.Generic.List[string]]::new()
+                    foreach ($Client in (@($Egress.Clients) | Select-Object -First 2)) {
+                        $Busiest.Add("$($Client.AppName) ($(Format-DiagnosticsBytes -Bytes $Client.Bytes))")
+                    }
+                    $TopClientText = if ($Busiest.Count -gt 0) { $Busiest[0] } else { 'no API clients' }
+
+                    if ($Egress.TodayShed -gt 0 -or $Egress.CapReachedUtc) {
+                        $BusiestText = if ($Busiest.Count -gt 0) { $Busiest -join ', ' } else { 'no API clients' }
+                        $Results.Add(@{
+                                Check  = 'egress'
+                                Status = 'FAIL'
+                                Detail = "API egress cap reached at $($Egress.CapReachedUtc): $($Egress.TodayShed) request(s) refused with 429; served $TodayDisplay of $CapDisplay; busiest: $BusiestText"
+                                Fix    = 'Throttle the named integration or raise the daily egress budget.'
+                            })
+                    } elseif ($Egress.Enforcing -and $null -ne $Percent -and $Percent -ge 75) {
+                        $Results.Add(@{
+                                Check  = 'egress'
+                                Status = 'WARN'
+                                Detail = "$TodayDisplay of $CapDisplay daily API egress budget ($Percent%) - on course to hit the cap; busiest: $TopClientText"
+                                Fix    = 'Throttle the named integration or raise the daily egress budget.'
+                            })
+                    } elseif ($Egress.Enforcing) {
+                        $Results.Add(@{ Check = 'egress'; Status = 'PASS'; Detail = "$TodayDisplay of $CapDisplay ($Percent%)"; Fix = $null })
+                    } else {
+                        $Results.Add(@{ Check = 'egress'; Status = 'INFO'; Detail = "$TodayDisplay served to API clients today (no daily budget set); busiest: $TopClientText"; Fix = $null })
+                    }
+                }
 
                 $TotalAccess = 0
                 foreach ($Client in $ClientTotals.Values) { $TotalAccess += $Client.Count }
@@ -308,7 +356,21 @@ function Invoke-ListInstanceDiagnostics {
                         })
                 }
 
-                $Body = @{ Results = @{ Buckets = @($Buckets); Events = @($Events); HeapCapMb = Get-DiagnosticsHeapCapMb -Samples $Samples } }
+                if ($Egress) {
+                    $Egress | Add-Member -NotePropertyName 'Available' -NotePropertyValue $true -Force
+                    $EgressBody = $Egress
+                } else {
+                    $EgressBody = @{ Available = $false }
+                }
+
+                $Body = @{
+                    Results = @{
+                        Buckets   = @($Buckets)
+                        Events    = @($Events)
+                        HeapCapMb = Get-DiagnosticsHeapCapMb -Samples $Samples
+                        Egress    = $EgressBody
+                    }
+                }
             }
             default {
                 return [HttpResponseContext]@{

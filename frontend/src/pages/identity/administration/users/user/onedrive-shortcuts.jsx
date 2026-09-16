@@ -144,9 +144,10 @@ const Page = () => {
           title="Add OneDrive Shortcut"
           row={user}
           defaultvalues={{
-            destination: { label: 'OneDrive root', value: 'root' },
+            destination: { label: 'Shortcuts folder (Microsoft UI)', value: 'shortcuts' },
           }}
           relatedQueryKeys={[shortcutsQueryKey]}
+          allowResubmit
           fields={[
             {
               type: 'autoComplete',
