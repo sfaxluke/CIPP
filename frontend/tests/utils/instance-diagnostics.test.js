@@ -3,7 +3,9 @@ import {
   sortDiagnosticsChecks,
   buildClientLogQuery,
   buildRequestSeries,
+  buildStackedSeries,
   getCheckLabel,
+  formatBytes,
 } from '../../src/utils/instance-diagnostics'
 
 describe('instance-diagnostics', () => {
@@ -79,6 +81,49 @@ describe('instance-diagnostics', () => {
     })
   })
 
+  describe('buildStackedSeries', () => {
+    const egressBuckets = [
+      {
+        BucketStart: '2026-09-10T10:00:00Z',
+        Clients: [
+          { AppId: 'a', AppName: 'App A', Bytes: 100, Requests: 2 },
+          { AppId: 'b', AppName: 'App B', Bytes: 300, Requests: 1 },
+          { AppId: 'z', AppName: 'App Z', Bytes: 50, Requests: 1 },
+        ],
+      },
+      {
+        BucketStart: '2026-09-10T10:15:00Z',
+        Clients: [{ AppId: 'b', AppName: 'App B', Bytes: 200, Requests: 3 }],
+      },
+    ]
+
+    it('stacks a chosen value keyed on a chosen bucket field', () => {
+      const { data, series } = buildStackedSeries(egressBuckets, {
+        bucketKey: 'BucketStart',
+        valueKey: 'Bytes',
+        topN: 2,
+      })
+      expect(series).toEqual([
+        { AppId: 'b', AppName: 'App B' },
+        { AppId: 'a', AppName: 'App A' },
+      ])
+      expect(data).toEqual([
+        { Bucket: '2026-09-10T10:00:00Z', a: 100, b: 300, Other: 50 },
+        { Bucket: '2026-09-10T10:15:00Z', a: 0, b: 200 },
+      ])
+    })
+
+    it('keeps the caller order first so a client gets the same colour in both strips', () => {
+      const { series } = buildStackedSeries(egressBuckets, {
+        bucketKey: 'BucketStart',
+        valueKey: 'Bytes',
+        topN: 2,
+        order: ['a', 'missing', 'b'],
+      })
+      expect(series.map((s) => s.AppId)).toEqual(['a', 'b'])
+    })
+  })
+
   describe('sortDiagnosticsChecks', () => {
     it('orders FAIL, WARN, INFO, PASS', () => {
       const checks = [
@@ -100,6 +145,15 @@ describe('instance-diagnostics', () => {
     it('maps known check ids to readable labels and passes unknown ids through', () => {
       expect(getCheckLabel('api-clients')).toBe('API clients')
       expect(getCheckLabel('some-future-check')).toBe('some-future-check')
+    })
+  })
+
+  describe('formatBytes', () => {
+    it('picks the right unit with one decimal place', () => {
+      expect(formatBytes(512)).toBe('512.0 B')
+      expect(formatBytes(2048)).toBe('2.0 KB')
+      expect(formatBytes(5 * 1024 * 1024)).toBe('5.0 MB')
+      expect(formatBytes(1.5 * 1024 * 1024 * 1024)).toBe('1.5 GB')
     })
   })
 
