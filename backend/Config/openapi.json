@@ -6017,6 +6017,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "isPublic": {
+                    "type": "boolean"
+                  },
                   "sensitivityLabel": {
                     "type": "string"
                   },
@@ -6024,7 +6027,12 @@
                     "type": "string"
                   },
                   "siteDesign": {
-                    "$ref": "#/components/schemas/LabelValue"
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/LabelValue"
+                      }
+                    ],
+                    "description": "Optional. Only applies to the Team and Communication templates; omitted for TeamGroup."
                   },
                   "siteName": {
                     "type": "string"
@@ -6095,6 +6103,9 @@
                     "items": {
                       "type": "object",
                       "properties": {
+                        "isPublic": {
+                          "type": "string"
+                        },
                         "sensitivityLabel": {
                           "type": "string"
                         },
@@ -6102,7 +6113,8 @@
                           "type": "string"
                         },
                         "siteDesign": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Optional. Only applies to the Team and Communication templates; leave blank for TeamGroup."
                         },
                         "siteName": {
                           "type": "string"
